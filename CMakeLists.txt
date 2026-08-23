@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 23)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(OPENDHT REQUIRED IMPORTED_TARGET opendht)
 
+include_directories(src/protocol)
+
 add_executable(p2p_nat_v2 src/app/main.cpp
         src/reactor/reactor.cpp
         src/reactor/reactor.h
