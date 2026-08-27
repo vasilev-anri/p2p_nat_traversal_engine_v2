@@ -6,7 +6,12 @@
 #include "../handlers/tcp_listener.h"
 #include "../handlers/udp_handler.h"
 #include "../reactor/reactor.h"
+#include "../rendezvous/rendezvous_client.h"
 #include "../utils/tcp_utils.h"
+
+
+
+
 
 
 int main(int argc, char* argv[]) {
@@ -33,6 +38,40 @@ int main(int argc, char* argv[]) {
     auto listener = std::make_unique<TCPListener>(tcp_port, node_id, udp_port);
 
     auto udp_sock = std::make_unique<UDPHandler>(udp_port);
+    auto udp_raw = udp_sock.get(); /* saving raw pointer before std::move() */
+
+    // vps addr
+    constexpr uint32_t VPS_IP = 0;
+    constexpr uint16_t VPS_PORT = 9999;
+
+    udp_sock->set_vps_address(inet_addr("62.238.114.216"), VPS_PORT);
+
+    RendezvousClient rendezvous(*udp_raw, node_id, inet_addr("62.238.114.216"), VPS_PORT);
+
+    udp_sock->set_rendezvous_callback([&rendezvous](const Notify& notify) {
+        rendezvous.handle_notify(const_cast<Notify*>(&notify));
+    });
+
+    rendezvous.set_notify_callback([&](Endpoint pub, Endpoint priv) {
+        printf("Got peer endpoints - public: %s:%d\n", ip_to_str(pub.ip).c_str(), ntohs(pub.port));
+        printf("                     Private: %s:%d\n", ip_to_str(priv.ip).c_str(), ntohs(priv.port));
+
+        const char*  punch_msg = "PUNCH";
+
+        // punch to public endpoint
+        udp_raw->send_to(pub.ip, ntohs(pub.port), reinterpret_cast<const uint8_t*>(punch_msg), 5);
+        // puch to private endpoint
+        udp_raw->send_to(priv.ip, ntohs(priv.port), reinterpret_cast<const uint8_t*>(punch_msg), 5);
+
+        printf("Punching to public: %s:%d\n", ip_to_str(pub.ip).c_str(), ntohs(pub.port));
+        printf("Punching to private: %s:%d\n", ip_to_str(priv.ip).c_str(), ntohs(priv.port));
+
+    });
+
+    udp_sock->set_punch_callback([](uint32_t ip, uint16_t port) {
+        printf("Punch packet from %s:%d\n", ip_to_str(ip).c_str(), ntohs(port));
+    });
+
 
     listener->set_event_callback(
         [&reactor](std::unique_ptr<EventHandler> handler) {
@@ -44,6 +83,8 @@ int main(int argc, char* argv[]) {
     reactor.register_handler(std::move(listener));
     reactor.register_handler(std::move(udp_sock));
 
+    rendezvous.send_register();
+
     int dht_port = is_client ? 4223 : 4222;
     dht.start(dht_port);
 
@@ -52,7 +93,7 @@ int main(int argc, char* argv[]) {
     std::set<uint64_t> connected_peers;
     std::mutex peers_mutex;
 
-    dht.discover([&reactor, &connected_peers, &peers_mutex, &dht, tcp_port, udp_port](const Peer& peer) {
+    dht.discover([&reactor, &connected_peers, &peers_mutex, &dht, tcp_port, udp_port, &rendezvous](const Peer& peer) {
         std::cout << "Discovered peer" << std::endl;
         std::cout << "node_id: " << peer.node_id << std::endl;
         std::cout << "tcp_port: " << peer.tcp_port << std::endl;
@@ -64,6 +105,9 @@ int main(int argc, char* argv[]) {
         if (peer.ip == dht.get_self_ip()) return;   // skip self by IP
         if (connected_peers.count(peer.node_id)) return;
         connected_peers.insert(peer.node_id);
+
+        // ask rendezvous to coordinate punch
+        rendezvous.send_request(peer.node_id);
 
         char ip_str[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &peer.ip, ip_str, sizeof(ip_str));
