@@ -59,15 +59,29 @@ int main(int argc, char* argv[]) {
         const char*  punch_msg = "PUNCH";
 
         // punch to public endpoint
-        udp_raw->send_to(pub.ip, ntohs(pub.udp_port), reinterpret_cast<const uint8_t*>(punch_msg), 5);
+        if (pub.ip != 0 && pub.udp_port != 0) {
+            udp_raw->send_to(pub.ip, ntohs(pub.udp_port), reinterpret_cast<const uint8_t*>(punch_msg), 5);
+            printf("Punching to public: %s:%d\n", ip_to_str(pub.ip).c_str(), ntohs(pub.udp_port));
+        }
+
         // puch to private endpoint
-        udp_raw->send_to(priv.ip, ntohs(priv.udp_port), reinterpret_cast<const uint8_t*>(punch_msg), 5);
+        if (priv.ip != 0 && priv.udp_port != 0) {
+            udp_raw->send_to(priv.ip, ntohs(priv.udp_port), reinterpret_cast<const uint8_t*>(punch_msg), 5);
+            printf("Punching to private: %s:%d\n", ip_to_str(priv.ip).c_str(), ntohs(priv.udp_port));
 
-        printf("Punching to public: %s:%d\n", ip_to_str(pub.ip).c_str(), ntohs(pub.udp_port));
-        printf("Punching to private: %s:%d\n", ip_to_str(priv.ip).c_str(), ntohs(priv.udp_port));
+        }
 
 
-        connect_to_peer(reactor, ip_to_str(pub.ip), ntohs(pub.tcp_port), node_id, tcp_port, udp_port);
+        if (pub.ip != 0 && pub.tcp_port != 0) {
+            connect_to_peer(reactor, ip_to_str(pub.ip), ntohs(pub.tcp_port), node_id, tcp_port, udp_port);
+
+        }
+
+        if (priv.ip != 0 && priv.tcp_port != 0) {
+            connect_to_peer(reactor, ip_to_str(priv.ip), ntohs(priv.tcp_port), node_id, tcp_port, udp_port);
+
+        }
+
 
 
     });

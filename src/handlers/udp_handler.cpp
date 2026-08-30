@@ -74,7 +74,7 @@ void UDPHandler::send_to(uint32_t ip, uint16_t port, const uint8_t* data, size_t
 
 void UDPHandler::set_vps_address(uint32_t ip, uint16_t port) {
     vps_endpoint_.ip = ip;
-    vps_endpoint_.port = port;
+    vps_endpoint_.port = htons(port);
 }
 
 
