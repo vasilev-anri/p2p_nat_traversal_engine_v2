@@ -46,25 +46,29 @@ int main(int argc, char* argv[]) {
 
     udp_sock->set_vps_address(inet_addr("62.238.114.216"), VPS_PORT);
 
-    RendezvousClient rendezvous(*udp_raw, node_id, inet_addr("62.238.114.216"), VPS_PORT);
+    RendezvousClient rendezvous(*udp_raw, tcp_port, node_id, inet_addr("62.238.114.216"), VPS_PORT);
 
     udp_sock->set_rendezvous_callback([&rendezvous](const Notify& notify) {
         rendezvous.handle_notify(const_cast<Notify*>(&notify));
     });
 
     rendezvous.set_notify_callback([&](Endpoint pub, Endpoint priv) {
-        printf("Got peer endpoints - public: %s:%d\n", ip_to_str(pub.ip).c_str(), ntohs(pub.port));
-        printf("                     Private: %s:%d\n", ip_to_str(priv.ip).c_str(), ntohs(priv.port));
+        printf("Got peer endpoints - public: %s:%d\n", ip_to_str(pub.ip).c_str(), ntohs(pub.udp_port));
+        printf("                     Private: %s:%d\n", ip_to_str(priv.ip).c_str(), ntohs(priv.udp_port));
 
         const char*  punch_msg = "PUNCH";
 
         // punch to public endpoint
-        udp_raw->send_to(pub.ip, ntohs(pub.port), reinterpret_cast<const uint8_t*>(punch_msg), 5);
+        udp_raw->send_to(pub.ip, ntohs(pub.udp_port), reinterpret_cast<const uint8_t*>(punch_msg), 5);
         // puch to private endpoint
-        udp_raw->send_to(priv.ip, ntohs(priv.port), reinterpret_cast<const uint8_t*>(punch_msg), 5);
+        udp_raw->send_to(priv.ip, ntohs(priv.udp_port), reinterpret_cast<const uint8_t*>(punch_msg), 5);
 
-        printf("Punching to public: %s:%d\n", ip_to_str(pub.ip).c_str(), ntohs(pub.port));
-        printf("Punching to private: %s:%d\n", ip_to_str(priv.ip).c_str(), ntohs(priv.port));
+        printf("Punching to public: %s:%d\n", ip_to_str(pub.ip).c_str(), ntohs(pub.udp_port));
+        printf("Punching to private: %s:%d\n", ip_to_str(priv.ip).c_str(), ntohs(priv.udp_port));
+
+
+        connect_to_peer(reactor, ip_to_str(pub.ip), ntohs(pub.tcp_port), node_id, tcp_port, udp_port);
+
 
     });
 
@@ -112,7 +116,6 @@ int main(int argc, char* argv[]) {
         char ip_str[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &peer.ip, ip_str, sizeof(ip_str));
 
-        connect_to_peer(reactor, ip_str, peer.tcp_port, node_id, tcp_port, udp_port);
     });
 
     dht.announce();
