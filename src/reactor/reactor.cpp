@@ -1,5 +1,6 @@
 #include "reactor.h"
 
+#include <ranges>
 #include <netinet/in.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
@@ -38,18 +39,17 @@ void Reactor::unregister_handler(int fd) {
 void Reactor::handle_events() {
 
     epoll_event events[64];
-    auto result = epoll_wait_interruptible(epfd_.get(), events, 64, 5000);
+    auto result = epoll_wait_interruptible(epfd_.get(), events, 64, 50);
     if (!result) return;
-    if (result.value() == 0) {
-        for (auto& [fd, handler] : handlers_) {
-            handler->on_tick();
-        }
-        return;
-    }
 
-    for (int i = 0; i < result.value(); ++i) {
+    const int nfds = result.value();
+    for (int i = 0; i < nfds; ++i) {
         auto* handler = static_cast<EventHandler*>(events[i].data.ptr);
         handler->handle_event(translate_events(events[i].events));
+    }
+
+    for (auto& handler : handlers_ | std::views::values) {
+        handler->on_tick();
     }
 }
 

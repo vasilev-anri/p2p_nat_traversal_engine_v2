@@ -188,6 +188,10 @@ void TCPSession::send_pong(uint64_t nonce) {
 
 void TCPSession::on_tick() {
     if (state_ != SessionState::READY) return;
+    auto now = std::chrono::steady_clock::now();
+    if (now - last_ping_ < std::chrono::seconds(5)) return;
+    last_ping_ = now;
+
     send_ping();
 }
 

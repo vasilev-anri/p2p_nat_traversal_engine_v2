@@ -52,38 +52,17 @@ int main(int argc, char* argv[]) {
         rendezvous.handle_notify(const_cast<Notify*>(&notify));
     });
 
-    rendezvous.set_notify_callback([&](Endpoint pub, Endpoint priv) {
+    rendezvous.set_notify_callback([&](uint64_t target_node_id, Endpoint pub, Endpoint priv) {
         printf("Got peer endpoints - public: %s:%d\n", ip_to_str(pub.ip).c_str(), ntohs(pub.udp_port));
         printf("                     Private: %s:%d\n", ip_to_str(priv.ip).c_str(), ntohs(priv.udp_port));
 
-        const char*  punch_msg = "PUNCH";
+        udp_raw->setup_punch(target_node_id, pub.ip, ntohs(pub.udp_port), priv.ip, ntohs(priv.udp_port));
 
-        // punch to public endpoint
-        if (pub.ip != 0 && pub.udp_port != 0) {
-            udp_raw->send_to(pub.ip, ntohs(pub.udp_port), reinterpret_cast<const uint8_t*>(punch_msg), 5);
-            printf("Punching to public: %s:%d\n", ip_to_str(pub.ip).c_str(), ntohs(pub.udp_port));
-        }
-
-        // puch to private endpoint
-        if (priv.ip != 0 && priv.udp_port != 0) {
-            udp_raw->send_to(priv.ip, ntohs(priv.udp_port), reinterpret_cast<const uint8_t*>(punch_msg), 5);
-            printf("Punching to private: %s:%d\n", ip_to_str(priv.ip).c_str(), ntohs(priv.udp_port));
-
-        }
-
-
-        if (pub.ip != 0 && pub.tcp_port != 0) {
+        if (pub.ip != 0 && pub.tcp_port != 0)
             connect_to_peer(reactor, ip_to_str(pub.ip), ntohs(pub.tcp_port), node_id, tcp_port, udp_port);
 
-        }
-
-        if (priv.ip != 0 && priv.tcp_port != 0) {
+        if (priv.ip != 0 && priv.tcp_port != 0)
             connect_to_peer(reactor, ip_to_str(priv.ip), ntohs(priv.tcp_port), node_id, tcp_port, udp_port);
-
-        }
-
-
-
     });
 
     udp_sock->set_punch_callback([](uint32_t ip, uint16_t port) {

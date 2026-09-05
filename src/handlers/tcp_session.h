@@ -1,4 +1,5 @@
 #pragma once
+#include <chrono>
 #include <cstdint>
 
 #include "event_handler.h"
@@ -35,4 +36,6 @@ private:
     uint64_t node_id_;
     uint16_t self_tcp_port_;
     uint16_t self_udp_port_;
+
+    std::chrono::steady_clock::time_point last_ping_;
 };

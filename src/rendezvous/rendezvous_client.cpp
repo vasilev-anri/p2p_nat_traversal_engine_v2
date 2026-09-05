@@ -17,6 +17,7 @@ void RendezvousClient::send_register() {
     msg.private_endpoint.udp_port = htons(udp_.get_port_());
     msg.private_endpoint.tcp_port = htons(tcp_port_);
 
+    printf("Registering with private udp_port: %d\n", udp_.get_port_());
     udp_.send_to(vps_endpoint_.ip, vps_endpoint_.port, reinterpret_cast<const uint8_t*>(&msg), sizeof(msg));
 }
 
@@ -45,7 +46,7 @@ void RendezvousClient::send_request(uint64_t target_node) {
 
 void RendezvousClient::handle_notify(Notify* msg) {
     if (notify_callback_) {
-        notify_callback_(msg->public_endpoint, msg->private_endpoint);
+        notify_callback_(msg->header.node_id, msg->public_endpoint, msg->private_endpoint);
     }
 }
 

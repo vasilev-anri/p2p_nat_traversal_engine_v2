@@ -1,5 +1,6 @@
 #include "udp_handler.h"
 
+#include <chrono>
 #include <cstdio>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -36,7 +37,8 @@ void UDPHandler::handle_event(uint32_t events) {
                 auto* notify = reinterpret_cast<const Notify*>(packet.data.data());
                 rendezvous_callback_(*notify);
             }
-        } else {
+        }
+        else {
             if (punch_callback_) {
                 punch_callback_(packet.sender.sin_addr.s_addr, packet.sender.sin_port);
             }
@@ -44,6 +46,22 @@ void UDPHandler::handle_event(uint32_t events) {
     }
 
     fflush(stdout);
+}
+
+void UDPHandler::on_tick() {
+    auto time_point = std::chrono::steady_clock::now();
+
+    for (auto& target : punch_targets_) {
+        if (target.remaining_sends <= 0) continue;
+        if (time_point < target.next_send) continue;
+
+        send_to(target.public_endpoint.ip, target.public_endpoint.port, reinterpret_cast<const uint8_t*>(punch_msg_.data()), punch_msg_.size());
+        send_to(target.private_endpoint.ip, target.private_endpoint.port, reinterpret_cast<const uint8_t*>(punch_msg_.data()), punch_msg_.size());
+        target.remaining_sends--;
+        target.next_send = time_point + std::chrono::milliseconds(30);
+    }
+
+    std::erase_if(punch_targets_, [](const PunchTarget& t) { return t.remaining_sends <= 0; });
 }
 
 int UDPHandler::get_fd() {
@@ -78,7 +96,6 @@ void UDPHandler::set_vps_address(uint32_t ip, uint16_t port) {
 }
 
 
-
 void UDPHandler::setup() {
     setup_bound_socket(get_fd(), port_);
 }
@@ -90,3 +107,22 @@ void UDPHandler::set_rendezvous_callback(RendezvousCallback cb) {
 void UDPHandler::set_punch_callback(PunchCallback cb) {
     punch_callback_ = std::move(cb);
 }
+
+void UDPHandler::setup_punch(uint64_t node_id, uint32_t public_ip, uint16_t public_port, uint32_t private_ip, uint16_t private_port) {
+    PunchTarget punch_target {
+        .node_id = node_id,
+        .public_endpoint = {
+            .ip = public_ip,
+            .port = public_port
+        },
+        .private_endpoint = {
+            .ip = private_ip,
+            .port = private_port
+        },
+        .remaining_sends = 20,
+        .next_send = std::chrono::steady_clock::now()
+    };
+
+    punch_targets_.push_back(punch_target);
+}
+

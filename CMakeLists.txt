@@ -44,6 +44,7 @@ add_executable(p2p_nat_v2 src/app/main.cpp
         src/peer/peer_manager.cpp
         src/rendezvous/rendezvous_client.cpp
         src/rendezvous/vps_utils.h
+        src/rendezvous/punch_target.h
 )
 
 target_link_libraries(p2p_nat_v2 PRIVATE PkgConfig::OPENDHT)
