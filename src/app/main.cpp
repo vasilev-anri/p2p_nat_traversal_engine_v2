@@ -65,8 +65,9 @@ int main(int argc, char* argv[]) {
             connect_to_peer(reactor, ip_to_str(priv.ip), ntohs(priv.tcp_port), node_id, tcp_port, udp_port);
     });
 
-    udp_sock->set_punch_callback([](uint32_t ip, uint16_t port) {
-        printf("Punch packet from %s:%d\n", ip_to_str(ip).c_str(), ntohs(port));
+    udp_sock->set_punch_callback([udp_raw](uint32_t ip, uint16_t port) {
+        printf("[punch] hole opened <-- %s:%d\n", ip_to_str(ip).c_str(), ntohs(port));
+        udp_raw->mark_punch_success(ip, port);
     });
 
 

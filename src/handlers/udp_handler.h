@@ -25,6 +25,8 @@ public:
 
     void setup_punch(uint64_t node_id, uint32_t public_ip, uint16_t public_port, uint32_t private_ip, uint16_t private_port);
 
+    void mark_punch_success(uint32_t ip, uint16_t port);
+
 private:
     UniqueFD fd_;
     int port_;

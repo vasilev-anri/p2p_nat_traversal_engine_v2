@@ -17,4 +17,6 @@ struct PunchTarget {
 
     int remaining_sends;
     std::chrono::steady_clock::time_point next_send;
+
+    bool success = false;
 };

@@ -54,6 +54,7 @@ void UDPHandler::on_tick() {
     for (auto& target : punch_targets_) {
         if (target.remaining_sends <= 0) continue;
         if (time_point < target.next_send) continue;
+        if (target.success) continue;
 
         send_to(target.public_endpoint.ip, target.public_endpoint.port, reinterpret_cast<const uint8_t*>(punch_msg_.data()), punch_msg_.size());
         send_to(target.private_endpoint.ip, target.private_endpoint.port, reinterpret_cast<const uint8_t*>(punch_msg_.data()), punch_msg_.size());
@@ -61,7 +62,7 @@ void UDPHandler::on_tick() {
         target.next_send = time_point + std::chrono::milliseconds(30);
     }
 
-    std::erase_if(punch_targets_, [](const PunchTarget& t) { return t.remaining_sends <= 0; });
+    std::erase_if(punch_targets_, [](const PunchTarget& t) { return t.remaining_sends <= 0 || t.success; });
 }
 
 int UDPHandler::get_fd() {
@@ -124,5 +125,14 @@ void UDPHandler::setup_punch(uint64_t node_id, uint32_t public_ip, uint16_t publ
     };
 
     punch_targets_.push_back(punch_target);
+}
+
+void UDPHandler::mark_punch_success(uint32_t ip, uint16_t port) {
+    for (auto& target : punch_targets_) {
+        if (target.public_endpoint.ip == ip || target.private_endpoint.ip == ip) {
+            target.success = true;
+            printf("[punch] stopping retries for %s:%d\n", ip_to_str(ip).c_str(), ntohs(port));
+        }
+    }
 }
 
