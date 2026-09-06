@@ -126,7 +126,7 @@ void UDPHandler::setup_punch(uint64_t node_id, uint32_t public_ip, uint16_t publ
             .ip = private_ip,
             .port = private_port
         },
-        .remaining_sends = 20,
+        .remaining_sends = 100,
         .next_send = std::chrono::steady_clock::now()
     };
 
