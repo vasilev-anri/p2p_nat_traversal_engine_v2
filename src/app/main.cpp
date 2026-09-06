@@ -53,8 +53,12 @@ int main(int argc, char* argv[]) {
     });
 
     rendezvous.set_notify_callback([&](uint64_t target_node_id, Endpoint pub, Endpoint priv) {
-        printf("Got peer endpoints - public: %s:%d\n", ip_to_str(pub.ip).c_str(), ntohs(pub.udp_port));
-        printf("                     Private: %s:%d\n", ip_to_str(priv.ip).c_str(), ntohs(priv.udp_port));
+        printf("Got peer endpoints - public: %s udp=%d tcp=%d\n",
+               ip_to_str(pub.ip).c_str(), ntohs(pub.udp_port), ntohs(pub.tcp_port));
+        printf("                     Private: %s udp=%d tcp=%d\n",
+               ip_to_str(priv.ip).c_str(), ntohs(priv.udp_port), ntohs(priv.tcp_port));
+        // printf("Got peer endpoints - public: %s:%d\n", ip_to_str(pub.ip).c_str(), ntohs(pub.udp_port));
+        // printf("                     Private: %s:%d\n", ip_to_str(priv.ip).c_str(), ntohs(priv.udp_port));
 
         udp_raw->setup_punch(target_node_id, pub.ip, ntohs(pub.udp_port), priv.ip, ntohs(priv.udp_port));
 
