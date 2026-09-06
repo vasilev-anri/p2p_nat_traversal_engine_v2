@@ -60,7 +60,11 @@ void UDPHandler::on_tick() {
         send_to(target.private_endpoint.ip, target.private_endpoint.port, reinterpret_cast<const uint8_t*>(punch_msg_.data()), punch_msg_.size());
         target.remaining_sends--;
         target.next_send = time_point + std::chrono::milliseconds(30);
+
+        printf("[punch] tick send node=%lu rem=%d\n", target.node_id, target.remaining_sends);
     }
+
+
 
     std::erase_if(punch_targets_, [](const PunchTarget& t) { return t.remaining_sends <= 0 || t.success; });
 }
@@ -80,11 +84,11 @@ void UDPHandler::send_to(uint32_t ip, uint16_t port, const uint8_t* data, size_t
     addr.sin_addr.s_addr = ip;
 
 
-    // debug
-    // printf("send_to: %s:%d len=%zu\n",
-    //        inet_ntoa(addr.sin_addr),
-    //        ntohs(addr.sin_port),
-    //        len);
+    //debug
+    printf("send_to: %s:%d len=%zu\n",
+           inet_ntoa(addr.sin_addr),
+           ntohs(addr.sin_port),
+           len);
 
     ssize_t n = ::sendto(get_fd(), data, len, 0,
                          reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
