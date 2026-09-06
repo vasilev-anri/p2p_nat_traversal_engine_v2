@@ -66,7 +66,6 @@ int main(int argc, char* argv[]) {
     });
 
     udp_sock->set_punch_callback([udp_raw](uint32_t ip, uint16_t port) {
-        printf("[punch] hole opened <-- %s:%d\n", ip_to_str(ip).c_str(), ntohs(port));
         udp_raw->mark_punch_success(ip, port);
     });
 

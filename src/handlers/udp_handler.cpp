@@ -128,10 +128,14 @@ void UDPHandler::setup_punch(uint64_t node_id, uint32_t public_ip, uint16_t publ
 }
 
 void UDPHandler::mark_punch_success(uint32_t ip, uint16_t port) {
+    if (punched_peers_.contains(ip)) return;
+    punched_peers_.insert(ip);
+    printf("[punch] hole opened <-- %s:%d\n", ip_to_str(ip).c_str(), ntohs(port));
+
     for (auto& target : punch_targets_) {
         if (target.public_endpoint.ip == ip || target.private_endpoint.ip == ip) {
             target.success = true;
-            printf("[punch] stopping retries for %s:%d\n", ip_to_str(ip).c_str(), ntohs(port));
+            // printf("[punch] stopping retries for %s:%d\n", ip_to_str(ip).c_str(), ntohs(port));
         }
     }
 }

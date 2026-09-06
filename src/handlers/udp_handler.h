@@ -1,5 +1,7 @@
 #pragma once
 
+#include <set>
+
 #include "event_handler.h"
 #include "../utils/unique_fd.h"
 #include "../protocol/messages.h"
@@ -34,6 +36,8 @@ private:
     RendezvousCallback rendezvous_callback_;
     PunchCallback punch_callback_;
     std::vector<PunchTarget> punch_targets_;
+
+    std::set<uint32_t> punched_peers_;
 
     static constexpr std::string_view punch_msg_ = "PUNCH";
 
