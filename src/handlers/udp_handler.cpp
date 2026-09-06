@@ -81,10 +81,10 @@ void UDPHandler::send_to(uint32_t ip, uint16_t port, const uint8_t* data, size_t
 
 
     // debug
-    printf("send_to: %s:%d len=%zu\n",
-           inet_ntoa(addr.sin_addr),
-           ntohs(addr.sin_port),
-           len);
+    // printf("send_to: %s:%d len=%zu\n",
+    //        inet_ntoa(addr.sin_addr),
+    //        ntohs(addr.sin_port),
+    //        len);
 
     ssize_t n = ::sendto(get_fd(), data, len, 0,
                          reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
