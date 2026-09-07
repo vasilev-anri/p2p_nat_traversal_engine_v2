@@ -63,14 +63,15 @@ int main(int argc, char* argv[]) {
     });
 
     std::set<uint64_t> connected_peers;
+    std::set<uint64_t> notified_peers;
     std::mutex peers_mutex;
 
     rendezvous.set_notify_callback([&](uint64_t target_node_id, Endpoint pub, Endpoint priv) {
 
         {
             std::lock_guard<std::mutex> lock(peers_mutex);
-            if (connected_peers.contains(target_node_id)) return;
-            connected_peers.insert(target_node_id);
+            if (notified_peers.contains(target_node_id)) return;
+            notified_peers.insert(target_node_id);
         }
 
         printf("[rendezvous] peer endpoints - public: %s:%d private: %s:%d\n",
