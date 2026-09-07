@@ -62,7 +62,17 @@ int main(int argc, char* argv[]) {
         rendezvous.handle_notify(const_cast<Notify*>(&notify));
     });
 
+    std::set<uint64_t> connected_peers;
+    std::mutex peers_mutex;
+
     rendezvous.set_notify_callback([&](uint64_t target_node_id, Endpoint pub, Endpoint priv) {
+
+        {
+            std::lock_guard<std::mutex> lock(peers_mutex);
+            if (connected_peers.contains(target_node_id)) return;
+            connected_peers.insert(target_node_id);
+        }
+
         printf("[rendezvous] peer endpoints - public: %s:%d private: %s:%d\n",
             ip_to_str(pub.ip).c_str(), ntohs(pub.udp_port),
             ip_to_str(priv.ip).c_str(), ntohs(priv.udp_port));
@@ -97,8 +107,7 @@ int main(int argc, char* argv[]) {
 
 
 
-    std::set<uint64_t> connected_peers;
-    std::mutex peers_mutex;
+
 
     dht.discover([&reactor, &connected_peers, &peers_mutex, &dht, tcp_port, udp_port, &rendezvous](const Peer& peer) {
         printf("[dht] discovered peer - node_id: %lu ip: %s\n", peer.node_id, ip_to_str(peer.ip).c_str());
