@@ -70,7 +70,7 @@ void TCPSession::on_message(const Message& message) {
             peer_.node_id = hello.node_id;
             peer_.tcp_port = hello.tcp_port;
             peer_.udp_port = hello.udp_port;
-            printf("[tcp] Peer connected - node_id: %lu\n", peer_.node_id);
+            printf("[tcp] peer connected - node_id: %lu\n", peer_.node_id);
             send_hello_ack();
             state_ = SessionState::READY;
             break;
