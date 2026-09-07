@@ -83,8 +83,8 @@ int main(int argc, char* argv[]) {
         if (pub.ip != 0 && pub.tcp_port != 0)
             connect_to_peer(reactor, ip_to_str(pub.ip), ntohs(pub.tcp_port), node_id, tcp_port, udp_port);
 
-        if (priv.ip != 0 && priv.tcp_port != 0)
-            connect_to_peer(reactor, ip_to_str(priv.ip), ntohs(priv.tcp_port), node_id, tcp_port, udp_port);
+        // if (priv.ip != 0 && priv.tcp_port != 0)
+        //     connect_to_peer(reactor, ip_to_str(priv.ip), ntohs(priv.tcp_port), node_id, tcp_port, udp_port);
     });
 
     udp_sock->set_punch_callback([udp_raw](uint32_t ip, uint16_t port) {
