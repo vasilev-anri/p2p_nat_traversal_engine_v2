@@ -1,6 +1,6 @@
 #include "peer_manager.h"
 
-#include "../utils/codec_utils.h"
+#include "../protocol/codec_utils.h"
 
 
 std::vector<uint8_t> serialize(Peer& peer) {

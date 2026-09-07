@@ -39,7 +39,7 @@ add_executable(p2p_nat_v2 src/app/main.cpp
         src/wire/messages/pong.h
         src/dht/dht_node.cpp
         src/dht/dht_node.h
-        src/utils/codec_utils.h
+        src/protocol/codec_utils.h
         src/peer/peer_manager.h
         src/peer/peer_manager.cpp
         src/rendezvous/rendezvous_client.cpp
