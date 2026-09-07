@@ -8,6 +8,7 @@
 #include "../wire/msg_parser.h"
 #include "../peer/peer.h"
 #include "../session/session_role.h"
+#include "../wire/msg_types.h"
 
 class TCPSession : public EventHandler {
 public:
@@ -23,6 +24,9 @@ public:
     void send_pong(uint64_t nonce);
 
     void on_tick() override;
+
+private:
+    void send_message(MessageType type, std::vector<uint8_t> payload);
 
 private:
     UniqueFD fd_;

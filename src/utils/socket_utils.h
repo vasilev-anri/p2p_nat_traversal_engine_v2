@@ -188,3 +188,9 @@ inline std::expected<int, SyscallError> epoll_wait_interruptible(int epfd, epoll
         return std::unexpected(SyscallError::from_errno("epoll_wait"));
     }
 }
+
+inline std::expected<void, SyscallError> udp_send_to(int fd, const void* data, size_t len, const sockaddr_in& addr) {
+    ssize_t n = ::sendto(fd, data, len, 0, reinterpret_cast<const sockaddr*>(&addr), sizeof(addr));
+    if (n == -1) return std::unexpected(SyscallError::from_errno("sendto"));
+    return {};
+}

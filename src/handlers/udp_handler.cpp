@@ -60,11 +60,7 @@ void UDPHandler::on_tick() {
         send_to(target.private_endpoint.ip, target.private_endpoint.port, reinterpret_cast<const uint8_t*>(punch_msg_.data()), punch_msg_.size());
         target.remaining_sends--;
         target.next_send = time_point + std::chrono::milliseconds(30);
-
-        printf("[punch] tick send node=%lu rem=%d\n", target.node_id, target.remaining_sends);
     }
-
-
 
     std::erase_if(punch_targets_, [](const PunchTarget& t) { return t.remaining_sends <= 0 || t.success; });
 }
@@ -83,16 +79,8 @@ void UDPHandler::send_to(uint32_t ip, uint16_t port, const uint8_t* data, size_t
     addr.sin_port = htons(port);
     addr.sin_addr.s_addr = ip;
 
-
-    //debug
-    printf("send_to: %s:%d len=%zu\n",
-           inet_ntoa(addr.sin_addr),
-           ntohs(addr.sin_port),
-           len);
-
-    ssize_t n = ::sendto(get_fd(), data, len, 0,
-                         reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
-    if (n == -1) perror("sendto");
+    if (auto result = udp_send_to(get_fd(), data, len, addr); !result)
+        fprintf(stderr, "[udp] send failed: %s\n", result.error().message().c_str());
 }
 
 void UDPHandler::set_vps_address(uint32_t ip, uint16_t port) {
@@ -114,7 +102,6 @@ void UDPHandler::set_punch_callback(PunchCallback cb) {
 }
 
 void UDPHandler::setup_punch(uint64_t node_id, uint32_t public_ip, uint16_t public_port, uint32_t private_ip, uint16_t private_port) {
-    printf("[punch] setup -> public: %s:%d private: %s:%d\n", ip_to_str(public_ip).c_str(), public_port, ip_to_str(private_ip).c_str(), private_port);
 
     PunchTarget punch_target {
         .node_id = node_id,
@@ -141,7 +128,6 @@ void UDPHandler::mark_punch_success(uint32_t ip, uint16_t port) {
     for (auto& target : punch_targets_) {
         if (target.public_endpoint.ip == ip || target.private_endpoint.ip == ip) {
             target.success = true;
-            // printf("[punch] stopping retries for %s:%d\n", ip_to_str(ip).c_str(), ntohs(port));
         }
     }
 }

@@ -11,18 +11,24 @@
 
 
 
-
+void print_startup_logs(uint64_t node_id, uint16_t tcp_port, uint16_t udp_port, const char* vps_ip, uint16_t vps_port) {
+    printf("[info] starting P2P NAT traversal engine\n");
+    printf("[info] node_id: %lu\n", node_id);
+    printf("[info] tcp: %d udp: %d\n", tcp_port, udp_port);
+    printf("[info] rendezvous server: %s:%d\n", vps_ip, vps_port);
+}
 
 
 int main(int argc, char* argv[]) {
 
-
     Reactor reactor;
 
-    bool is_client = (argc == 3 && std::string(argv[1]) == "--connect");
+    int tcp_port = 8080;
+    int udp_port = 9090;
 
-    int tcp_port = is_client ? 8081 : 8080;
-    int udp_port = is_client ? 9091 : 9090;
+    // vps addr
+    const char* vps_ip = "62.238.114.216";
+    constexpr uint16_t VPS_PORT = 9999;
 
 
     static uint64_t node_id = []() {
@@ -34,31 +40,32 @@ int main(int argc, char* argv[]) {
     DHTNode dht(node_id, tcp_port, udp_port);
 
 
-
     auto listener = std::make_unique<TCPListener>(tcp_port, node_id, udp_port);
 
     auto udp_sock = std::make_unique<UDPHandler>(udp_port);
     auto udp_raw = udp_sock.get(); /* saving raw pointer before std::move() */
 
-    // vps addr
-    constexpr uint32_t VPS_IP = 0;
-    constexpr uint16_t VPS_PORT = 9999;
 
-    udp_sock->set_vps_address(inet_addr("62.238.114.216"), VPS_PORT);
 
-    RendezvousClient rendezvous(*udp_raw, tcp_port, node_id, inet_addr("62.238.114.216"), VPS_PORT);
+
+    for (int i = 1; i < argc; i++) {
+        if (std::string(argv[i]) == "--vps" && i + 1 < argc) vps_ip = argv[i + 1];
+    }
+
+    print_startup_logs(node_id, tcp_port, udp_port, vps_ip, VPS_PORT);
+
+    udp_sock->set_vps_address(inet_addr(vps_ip), VPS_PORT);
+
+    RendezvousClient rendezvous(*udp_raw, tcp_port, node_id, inet_addr(vps_ip), VPS_PORT);
 
     udp_sock->set_rendezvous_callback([&rendezvous](const Notify& notify) {
         rendezvous.handle_notify(const_cast<Notify*>(&notify));
     });
 
     rendezvous.set_notify_callback([&](uint64_t target_node_id, Endpoint pub, Endpoint priv) {
-        printf("Got peer endpoints - public: %s udp=%d tcp=%d\n",
-               ip_to_str(pub.ip).c_str(), ntohs(pub.udp_port), ntohs(pub.tcp_port));
-        printf("                     Private: %s udp=%d tcp=%d\n",
-               ip_to_str(priv.ip).c_str(), ntohs(priv.udp_port), ntohs(priv.tcp_port));
-        // printf("Got peer endpoints - public: %s:%d\n", ip_to_str(pub.ip).c_str(), ntohs(pub.udp_port));
-        // printf("                     Private: %s:%d\n", ip_to_str(priv.ip).c_str(), ntohs(priv.udp_port));
+        printf("[rendezvous] peer endpoints - public: %s:%d private: %s:%d\n",
+            ip_to_str(pub.ip).c_str(), ntohs(pub.udp_port),
+            ip_to_str(priv.ip).c_str(), ntohs(priv.udp_port));
 
         udp_raw->setup_punch(target_node_id, pub.ip, ntohs(pub.udp_port), priv.ip, ntohs(priv.udp_port));
 
@@ -80,13 +87,12 @@ int main(int argc, char* argv[]) {
         }
     );
 
-    // reactor.register_handler(std::move(listener));
     reactor.register_handler(std::move(listener));
     reactor.register_handler(std::move(udp_sock));
 
     rendezvous.send_register();
 
-    int dht_port = is_client ? 4223 : 4222;
+    int dht_port = 4222;
     dht.start(dht_port);
 
 
@@ -95,12 +101,7 @@ int main(int argc, char* argv[]) {
     std::mutex peers_mutex;
 
     dht.discover([&reactor, &connected_peers, &peers_mutex, &dht, tcp_port, udp_port, &rendezvous](const Peer& peer) {
-        std::cout << "Discovered peer" << std::endl;
-        std::cout << "node_id: " << peer.node_id << std::endl;
-        std::cout << "tcp_port: " << peer.tcp_port << std::endl;
-        std::cout << "udp_port: " << peer.udp_port << std::endl;
-        std::cout << "ip: " << peer.ip << std::endl;
-
+        printf("[dht] discovered peer - node_id: %lu ip: %s\n", peer.node_id, ip_to_str(peer.ip).c_str());
         std::lock_guard<std::mutex> lock(peers_mutex);
         if (peer.node_id == node_id) return;        // skip self by node_id
         if (peer.ip == dht.get_self_ip()) return;   // skip self by IP
@@ -109,10 +110,6 @@ int main(int argc, char* argv[]) {
 
         // ask rendezvous to coordinate punch
         rendezvous.send_request(peer.node_id);
-
-        char ip_str[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &peer.ip, ip_str, sizeof(ip_str));
-
     });
 
     dht.announce();

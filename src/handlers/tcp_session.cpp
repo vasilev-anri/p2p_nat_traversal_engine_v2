@@ -44,7 +44,6 @@ void TCPSession::handle_event(uint32_t events) {
         done();
         return;
     }
-    //if (data.empty()) return;
 
     parser_.feed(data);
     Message message{};
@@ -71,14 +70,14 @@ void TCPSession::on_message(const Message& message) {
             peer_.node_id = hello.node_id;
             peer_.tcp_port = hello.tcp_port;
             peer_.udp_port = hello.udp_port;
-            printf("Peer connected - node_id: %lu\n", peer_.node_id);
+            printf("[tcp] Peer connected - node_id: %lu\n", peer_.node_id);
             send_hello_ack();
             state_ = SessionState::READY;
             break;
         }
         case MessageType::hello_ack: {
             if (state_ != SessionState::HANDSHAKING) break;
-            printf("handshake complete - session ready\n");
+            printf("[tcp] handshake complete - session ready\n");
             state_ = SessionState::READY;
             send_ping();
             break;
@@ -87,13 +86,10 @@ void TCPSession::on_message(const Message& message) {
             if (state_ != SessionState::READY) break;
             Ping ping = MessageCodec::decode_ping(message.payload);
             send_pong(ping.nonce);
-            printf("ping received - sending pong (nonce: %lu)\n", ping.nonce);
             break;
         }
         case MessageType::pong: {
             if (state_ != SessionState::READY) break;
-            Pong pong = MessageCodec::decode_pong(message.payload);
-            printf("pong received (nonce: %lu)\n", pong.nonce);
             break;
         }
         case MessageType::bye:
@@ -112,58 +108,22 @@ void TCPSession::send_hello() {
     hello.udp_port = self_udp_port_;
     auto payload = MessageCodec::encode_hello(hello);
 
-    MessageHeader header{};
-    header.magic = MessageHeader::MAGIC;
-    header.version = 1;
-    header.type = static_cast<uint8_t>(MessageType::hello);
-    header.length = static_cast<uint32_t>(payload.size());
-    header.session_id = 0;
-    header.request_id = 0;
-
-    Message message{};
-    message.header = header;
-    message.payload = payload;
-
-    send_all(get_fd(), message);
+    send_message(MessageType::hello, payload);
 
     state_ = SessionState::HANDSHAKING;
 }
 
 void TCPSession::send_hello_ack() {
-    MessageHeader header{};
-    header.magic = MessageHeader::MAGIC;
-    header.version = 1;
-    header.type = static_cast<uint8_t>(MessageType::hello_ack);
-    header.length = 0;
-    header.session_id = 0;
-    header.request_id = 0;
-
-    Message message{};
-    message.header = header;
-
-    send_all(get_fd(), message);
+    send_message(MessageType::hello_ack, {});
 }
 
 void TCPSession::send_ping() {
     Ping ping{};
-
     static std::mt19937_64 rng(std::random_device{}());
     ping.nonce = rng();
     auto payload = MessageCodec::encode_ping(ping);
 
-    MessageHeader header{};
-    header.magic = MessageHeader::MAGIC;
-    header.version = 1;
-    header.type = static_cast<uint8_t>(MessageType::ping);
-    header.length = static_cast<uint32_t>(payload.size());
-    header.session_id = 0;
-    header.request_id = 0;
-
-    Message message{};
-    message.header = header;
-    message.payload = payload;
-
-    send_all(get_fd(), message);
+    send_message(MessageType::ping, payload);
 }
 
 void TCPSession::send_pong(uint64_t nonce) {
@@ -171,19 +131,7 @@ void TCPSession::send_pong(uint64_t nonce) {
     pong.nonce = nonce;
     auto payload = MessageCodec::encode_pong(pong);
 
-    MessageHeader header{};
-    header.magic = MessageHeader::MAGIC;
-    header.version = 1;
-    header.type = static_cast<uint8_t>(MessageType::pong);
-    header.length = static_cast<uint32_t>(payload.size());
-    header.session_id = 0;
-    header.request_id = 0;
-
-    Message message{};
-    message.header = header;
-    message.payload = payload;
-
-    send_all(get_fd(), message);
+    send_message(MessageType::pong, payload);
 }
 
 void TCPSession::on_tick() {
@@ -193,5 +141,21 @@ void TCPSession::on_tick() {
     last_ping_ = now;
 
     send_ping();
+}
+
+void TCPSession::send_message(MessageType type, std::vector<uint8_t> payload) {
+    MessageHeader header{};
+    header.magic = MessageHeader::MAGIC;
+    header.version = 1;
+    header.type = static_cast<uint8_t>(type);
+    header.length = static_cast<uint32_t>(payload.size());
+    header.session_id = 0;
+    header.request_id = 0;
+
+    Message message{};
+    message.header = header;
+    message.payload = payload;
+
+    send_all(get_fd(), message);
 }
 

@@ -1,5 +1,7 @@
 #include "rendezvous_client.h"
 
+#include <fmt/ostream.h>
+
 
 RendezvousClient::RendezvousClient(UDPHandler& udp, uint16_t tcp_port, uint64_t node_id, uint32_t vps_ip, uint16_t vps_port) : udp_(udp), tcp_port_(tcp_port), node_id_(node_id) {
     vps_endpoint_.ip = vps_ip;
@@ -9,7 +11,7 @@ RendezvousClient::RendezvousClient(UDPHandler& udp, uint16_t tcp_port, uint64_t 
 void RendezvousClient::send_register() {
     Header header{};
     header.node_id = node_id_;
-    header.type = MessageType::REGISTER;
+    header.type = RendezvousMessageType::REGISTER;
 
     Register msg{};
     msg.header = header;
@@ -17,22 +19,23 @@ void RendezvousClient::send_register() {
     msg.private_endpoint.udp_port = htons(udp_.get_port_());
     msg.private_endpoint.tcp_port = htons(tcp_port_);
 
-    printf("Registering with private udp_port: %d\n", udp_.get_port_());
+    printf("[rendezvous] registering with VPS - node_id: %lu\n", node_id_);
+
     udp_.send_to(vps_endpoint_.ip, vps_endpoint_.port, reinterpret_cast<const uint8_t*>(&msg), sizeof(msg));
 }
 
 void RendezvousClient::send_keep_alive() {
     Header msg{};
     msg.node_id = node_id_;
-    msg.type = MessageType::KEEPALIVE;
+    msg.type = RendezvousMessageType::KEEPALIVE;
 
     udp_.send_to(vps_endpoint_.ip, vps_endpoint_.port, reinterpret_cast<const uint8_t*>(&msg), sizeof(msg));
 }
 
 void RendezvousClient::send_request(uint64_t target_node) {
     Header header{};
-    header.node_id = node_id_;;
-    header.type = MessageType::REQUEST;
+    header.node_id = node_id_;
+    header.type = RendezvousMessageType::REQUEST;
 
     Request msg{};
     msg.header = header;
@@ -45,6 +48,7 @@ void RendezvousClient::send_request(uint64_t target_node) {
 }
 
 void RendezvousClient::handle_notify(Notify* msg) {
+    printf("[rendezvous] NOTIFY received from node: %lu\n", msg->header.node_id);
     if (notify_callback_) {
         notify_callback_(msg->header.node_id, msg->public_endpoint, msg->private_endpoint);
     }
