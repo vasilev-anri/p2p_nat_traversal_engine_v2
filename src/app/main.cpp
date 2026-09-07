@@ -74,9 +74,7 @@ int main(int argc, char* argv[]) {
             notified_peers.insert(target_node_id);
         }
 
-        printf("[rendezvous] peer endpoints - public: %s:%d private: %s:%d\n",
-            ip_to_str(pub.ip).c_str(), ntohs(pub.udp_port),
-            ip_to_str(priv.ip).c_str(), ntohs(priv.udp_port));
+
 
         udp_raw->setup_punch(target_node_id, pub.ip, ntohs(pub.udp_port), priv.ip, ntohs(priv.udp_port));
 
@@ -85,6 +83,11 @@ int main(int argc, char* argv[]) {
 
         // if (priv.ip != 0 && priv.tcp_port != 0)
         //     connect_to_peer(reactor, ip_to_str(priv.ip), ntohs(priv.tcp_port), node_id, tcp_port, udp_port);
+
+        printf("[rendezvous] peer endpoints - public: %s:%d private: %s:%d\n",
+            ip_to_str(pub.ip).c_str(), ntohs(pub.udp_port),
+            ip_to_str(priv.ip).c_str(), ntohs(priv.udp_port));
+
     });
 
     udp_sock->set_punch_callback([udp_raw](uint32_t ip, uint16_t port) {
