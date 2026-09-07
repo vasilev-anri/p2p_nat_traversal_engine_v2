@@ -5,6 +5,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+#include "../protocol/RendezvousCodec.h"
 #include "../utils/error_utils.h"
 #include "../utils/io_events.h"
 #include "../utils/socket_setup.h"
@@ -34,8 +35,8 @@ void UDPHandler::handle_event(uint32_t events) {
     for (const auto& packet : packets) {
         if (packet.sender.sin_addr.s_addr == vps_endpoint_.ip && packet.sender.sin_port == vps_endpoint_.port) {
             if (rendezvous_callback_) {
-                auto* notify = reinterpret_cast<const Notify*>(packet.data.data());
-                rendezvous_callback_(*notify);
+                auto notify = RendezvousCodec::decode_notify(packet.data);
+                rendezvous_callback_(notify);
             }
         }
         else {
@@ -44,8 +45,6 @@ void UDPHandler::handle_event(uint32_t events) {
             }
         }
     }
-
-    fflush(stdout);
 }
 
 void UDPHandler::on_tick() {
