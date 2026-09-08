@@ -41,7 +41,7 @@ void DHTNode::try_set_public_ip() {
 
     for (const auto& addr : node_.getPublicAddress(AF_INET)) {
         if (!addr.isPrivate() && !addr.isLoopback()) {
-            self_.ip = addr.getIPv4().sin_addr.s_addr;
+            self_.ip = ntohl(addr.getIPv4().sin_addr.s_addr);
             printf("[info] public ip: %s\n", inet_ntoa(*reinterpret_cast<in_addr*>(&self_.ip)));
 
             // Re-announce() with the real IP. The first announce() at startup publishes ip = 0 (almost always)
