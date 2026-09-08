@@ -76,10 +76,10 @@ int main(int argc, char* argv[]) {
 
 
 
-        udp_raw->setup_punch(target_node_id, pub.ip, ntohs(pub.udp_port), priv.ip, ntohs(priv.udp_port));
+        udp_raw->setup_punch(target_node_id, htonl(pub.ip), pub.udp_port, htonl(priv.ip), priv.udp_port);
 
         if (pub.ip != 0 && pub.tcp_port != 0)
-            connect_to_peer(reactor, ip_to_str(pub.ip), ntohs(pub.tcp_port), node_id, tcp_port, udp_port);
+            connect_to_peer(reactor, ip_to_str(pub.ip), pub.tcp_port, node_id, tcp_port, udp_port);
 
         // if (priv.ip != 0 && priv.tcp_port != 0)
         //     connect_to_peer(reactor, ip_to_str(priv.ip), ntohs(priv.tcp_port), node_id, tcp_port, udp_port);
@@ -116,7 +116,6 @@ int main(int argc, char* argv[]) {
     dht.discover([&reactor, &connected_peers, &peers_mutex, &dht, tcp_port, udp_port, &rendezvous](const Peer& peer) {
         printf("[dht] discovered peer - node_id: %lu ip: %s\n", peer.node_id, ip_to_str(peer.ip).c_str());
         std::lock_guard<std::mutex> lock(peers_mutex);
-        if (peer.ip == 0) return;
         if (peer.node_id == node_id) return;        // skip self by node_id
         if (peer.ip == dht.get_self_ip()) return;   // skip self by IP
         if (connected_peers.contains(peer.node_id)) return;
@@ -126,7 +125,7 @@ int main(int argc, char* argv[]) {
         rendezvous.send_request(peer.node_id);
     });
 
-    dht.announce();
+    // dht.announce();
 
 
     for (;;) {

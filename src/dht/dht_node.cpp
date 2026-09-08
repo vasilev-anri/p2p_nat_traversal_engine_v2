@@ -26,6 +26,7 @@ void DHTNode::discover(PeerDiscoveryCallback cb) {
         for (const auto& value : values) {
             Peer peer = deserialize(value->data);
             if (peer.node_id == self_.node_id) continue;
+            if (peer.ip == 0) continue;
             cb(peer);
         }
         return true;
@@ -50,7 +51,7 @@ void DHTNode::try_set_public_ip() {
 
             // Re-announce() with the real IP. The first announce() at startup publishes ip = 0 (almost always)
             // this call updates it
-            // announce();
+            announce();
             break;
         }
     }
