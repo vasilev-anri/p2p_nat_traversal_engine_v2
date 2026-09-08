@@ -85,8 +85,8 @@ int main(int argc, char* argv[]) {
         //     connect_to_peer(reactor, ip_to_str(priv.ip), ntohs(priv.tcp_port), node_id, tcp_port, udp_port);
 
         printf("[rendezvous] peer endpoints - public: %s:%d private: %s:%d\n",
-            ip_to_str(pub.ip).c_str(), ntohs(pub.udp_port),
-            ip_to_str(priv.ip).c_str(), ntohs(priv.udp_port));
+            ip_to_str(pub.ip).c_str(), pub.udp_port,
+            ip_to_str(priv.ip).c_str(), priv.udp_port);
 
     });
 
