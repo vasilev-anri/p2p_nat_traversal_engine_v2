@@ -12,7 +12,7 @@ void RendezvousClient::send_register() {
     Register msg{};
     msg.header.node_id = node_id_;
     msg.header.type = RendezvousMessageType::REGISTER;
-    msg.private_endpoint.ip = get_private_ip();
+    msg.private_endpoint.ip = ntohl(get_private_ip());
     msg.private_endpoint.udp_port = udp_.get_port_();
     msg.private_endpoint.tcp_port = tcp_port_;
 
@@ -38,7 +38,7 @@ void RendezvousClient::send_request(uint64_t target_node) {
     msg.header.node_id = node_id_;
     msg.header.type = RendezvousMessageType::REQUEST;
     msg.target_node_id = target_node;
-    msg.private_endpoint.ip = get_private_ip();
+    msg.private_endpoint.ip = ntohl(get_private_ip());
     msg.private_endpoint.udp_port = udp_.get_port_();
     msg.private_endpoint.tcp_port = tcp_port_;
 
