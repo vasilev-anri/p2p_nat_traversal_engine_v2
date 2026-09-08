@@ -20,6 +20,7 @@ public:
     void handle_notify(Notify*);
 
     void set_notify_callback(NotifyCallback cb);
+    void on_tick();
 
 private:
     UDPHandler& udp_;
@@ -28,4 +29,5 @@ private:
     VPSEndpoint vps_endpoint_{};
     NotifyCallback notify_callback_;
     std::set<uint64_t> notified_peers_;
+    std::chrono::steady_clock::time_point last_keepalive_;
 };

@@ -6,6 +6,8 @@
 RendezvousClient::RendezvousClient(UDPHandler& udp, uint16_t tcp_port, uint64_t node_id, uint32_t vps_ip, uint16_t vps_port) : udp_(udp), tcp_port_(tcp_port), node_id_(node_id) {
     vps_endpoint_.ip = vps_ip;
     vps_endpoint_.port = vps_port;
+
+    last_keepalive_ = std::chrono::steady_clock::now();
 }
 
 void RendezvousClient::send_register() {
@@ -30,6 +32,7 @@ void RendezvousClient::send_keep_alive() {
 
     const auto data = RendezvousCodec::encode_header(msg);
 
+    printf("[rendezvous] sending keepalive - node_id: %lu\n", node_id_);
     udp_.send_to(vps_endpoint_.ip, vps_endpoint_.port, data.data(), data.size());
 }
 
@@ -59,5 +62,13 @@ void RendezvousClient::handle_notify(Notify* msg) {
 
 void RendezvousClient::set_notify_callback(NotifyCallback cb) {
     notify_callback_ = std::move(cb);
+}
+
+void RendezvousClient::on_tick() {
+    auto now = std::chrono::steady_clock::now();
+    if (now - last_keepalive_ < std::chrono::seconds(20)) return;
+    last_keepalive_ = now;
+
+    send_keep_alive();
 }
 

@@ -118,6 +118,7 @@ int main(int argc, char* argv[]) {
     for (;;) {
         reactor.handle_events();
         dht.try_set_public_ip();
+        rendezvous.on_tick();
     }
 
 }
