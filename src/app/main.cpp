@@ -63,26 +63,13 @@ int main(int argc, char* argv[]) {
     });
 
     std::set<uint64_t> connected_peers;
-    std::set<uint64_t> notified_peers;
     std::mutex peers_mutex;
 
     rendezvous.set_notify_callback([&](uint64_t target_node_id, Endpoint pub, Endpoint priv) {
-
-        {
-            std::lock_guard<std::mutex> lock(peers_mutex);
-            if (notified_peers.contains(target_node_id)) return;
-            notified_peers.insert(target_node_id);
-        }
-
-
-
         udp_raw->setup_punch(target_node_id, htonl(pub.ip), pub.udp_port, htonl(priv.ip), priv.udp_port);
 
         if (pub.ip != 0 && pub.tcp_port != 0)
             connect_to_peer(reactor, ip_to_str(pub.ip), pub.tcp_port, node_id, tcp_port, udp_port);
-
-        // if (priv.ip != 0 && priv.tcp_port != 0)
-        //     connect_to_peer(reactor, ip_to_str(priv.ip), ntohs(priv.tcp_port), node_id, tcp_port, udp_port);
 
         printf("[rendezvous] peer endpoints - public: %s:%d private: %s:%d\n",
             ip_to_str(pub.ip).c_str(), pub.udp_port,

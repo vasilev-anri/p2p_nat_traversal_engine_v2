@@ -27,4 +27,5 @@ private:
     uint64_t node_id_;
     VPSEndpoint vps_endpoint_{};
     NotifyCallback notify_callback_;
+    std::set<uint64_t> notified_peers_;
 };

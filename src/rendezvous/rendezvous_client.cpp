@@ -48,6 +48,9 @@ void RendezvousClient::send_request(uint64_t target_node) {
 }
 
 void RendezvousClient::handle_notify(Notify* msg) {
+    if (notified_peers_.contains(msg->header.node_id)) return;
+    notified_peers_.insert(msg->header.node_id);
+
     printf("[rendezvous] NOTIFY received from node: %lu\n", msg->header.node_id);
     if (notify_callback_) {
         notify_callback_(msg->header.node_id, msg->public_endpoint, msg->private_endpoint);
