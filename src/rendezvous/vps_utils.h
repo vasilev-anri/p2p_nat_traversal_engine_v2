@@ -22,15 +22,16 @@ inline uint32_t get_private_ip() {
         if (iface->ifa_addr->sa_family != AF_INET) continue;
         if (std::string(iface->ifa_name) == "lo") continue;
         auto* addr = reinterpret_cast<sockaddr_in*>(iface->ifa_addr);
-        res = addr->sin_addr.s_addr;
+        res = ntohl(addr->sin_addr.s_addr);
         break;
     }
     freeifaddrs(interfaces);
     return res;
 }
 
-inline std::string ip_to_str(uint32_t ip) {
+inline std::string ip_to_str(uint32_t host_order_ip) {
+    uint32_t net = htonl(host_order_ip);
     char buf[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &ip, buf, sizeof(buf));
+    inet_ntop(AF_INET, &net, buf, sizeof(buf));
     return buf;
 }
