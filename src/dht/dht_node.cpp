@@ -50,7 +50,7 @@ void DHTNode::try_set_public_ip() {
 
             // Re-announce() with the real IP. The first announce() at startup publishes ip = 0 (almost always)
             // this call updates it
-            announce();
+            // announce();
             break;
         }
     }
