@@ -47,6 +47,8 @@ add_executable(p2p_nat_v2 src/app/main.cpp
         src/rendezvous/punch_target.h
         src/protocol/RendezvousCodec.h
         src/protocol/RendezvousCodec.cpp
+        src/security/hmac_utils.cpp
+        src/security/hmac_utils.h
 )
 
 target_link_libraries(p2p_nat_v2 PRIVATE PkgConfig::OPENDHT)
