@@ -3,7 +3,7 @@
 #include "../peer/peer_manager.h"
 
 
-DHTNode::DHTNode(uint64_t node_id, uint16_t tcp_port, uint16_t udp_port) {
+DHTNode::DHTNode(uint64_t node_id, uint16_t tcp_port, uint16_t udp_port, std::string room_key) : room_key_(std::move(room_key)) {
     self_.node_id = node_id;
     self_.tcp_port = tcp_port;
     self_.udp_port = udp_port;
@@ -17,11 +17,11 @@ void DHTNode::start(uint16_t dht_port) {
 
 void DHTNode::announce() {
     auto data = serialize(self_);
-    node_.put(ROOM_KEY, data);
+    node_.put(room_key_, data);
 }
 
 void DHTNode::discover(PeerDiscoveryCallback cb) {
-    auto key = dht::InfoHash::get(ROOM_KEY);
+    auto key = dht::InfoHash::get(room_key_);
     auto token = node_.listen(key, [this, cb](const std::vector<std::shared_ptr<dht::Value>>& values, bool expired) {
         for (const auto& value : values) {
             Peer peer = deserialize(value->data);

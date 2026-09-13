@@ -8,6 +8,7 @@
 #include "../reactor/reactor.h"
 #include "../rendezvous/rendezvous_client.h"
 #include "../protocol/security/hmac_utils.h"
+#include "../utils/dht_utils.h"
 #include "../utils/tcp_utils.h"
 
 
@@ -23,6 +24,7 @@ void print_startup_logs(uint64_t node_id, uint16_t tcp_port, uint16_t udp_port, 
 int main(int argc, char* argv[]) {
 
     auto secret = HMACAuth::load_secret();
+    auto room_key = load_room_key();
 
     Reactor reactor;
 
@@ -40,7 +42,7 @@ int main(int argc, char* argv[]) {
         return gen();
     }();
 
-    DHTNode dht(node_id, tcp_port, udp_port);
+    DHTNode dht(node_id, tcp_port, udp_port, room_key);
 
 
     auto listener = std::make_unique<TCPListener>(tcp_port, node_id, udp_port);
