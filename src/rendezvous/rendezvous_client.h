@@ -12,7 +12,7 @@ class RendezvousClient {
 public:
     using NotifyCallback = std::function<void(uint64_t node_id, Endpoint public_endpoint, Endpoint private_endpoint)>;
 
-    RendezvousClient(UDPHandler& udp, uint16_t tcp_port, uint64_t node_id, uint32_t vps_ip, uint16_t vps_port);
+    RendezvousClient(UDPHandler& udp, uint16_t tcp_port, uint64_t node_id, uint32_t vps_ip, uint16_t vps_port, std::vector<uint8_t> secret);
 
     void send_register();
     void send_keep_alive();
@@ -30,4 +30,5 @@ private:
     NotifyCallback notify_callback_;
     std::set<uint64_t> notified_peers_;
     std::chrono::steady_clock::time_point last_keepalive_;
+    std::vector<uint8_t> secret_;
 };

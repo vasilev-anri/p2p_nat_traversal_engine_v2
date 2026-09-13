@@ -1,9 +1,10 @@
 #include "rendezvous_client.h"
 
 #include "../protocol/RendezvousCodec.h"
+#include "../protocol/security/hmac_utils.h"
 
 
-RendezvousClient::RendezvousClient(UDPHandler& udp, uint16_t tcp_port, uint64_t node_id, uint32_t vps_ip, uint16_t vps_port) : udp_(udp), tcp_port_(tcp_port), node_id_(node_id) {
+RendezvousClient::RendezvousClient(UDPHandler& udp, uint16_t tcp_port, uint64_t node_id, uint32_t vps_ip, uint16_t vps_port, std::vector<uint8_t> secret) : udp_(udp), tcp_port_(tcp_port), node_id_(node_id), secret_(std::move(secret)) {
     vps_endpoint_.ip = vps_ip;
     vps_endpoint_.port = vps_port;
 
@@ -19,10 +20,11 @@ void RendezvousClient::send_register() {
     msg.private_endpoint.tcp_port = tcp_port_;
 
     const auto data = RendezvousCodec::encode_register(msg);
+    const auto signed_data = HMACAuth::sign(secret_, data);
 
     printf("[rendezvous] registering with VPS - node_id: %lu\n", node_id_);
 
-    udp_.send_to(vps_endpoint_.ip, vps_endpoint_.port, data.data(), data.size());
+    udp_.send_to(vps_endpoint_.ip, vps_endpoint_.port, signed_data.data(), signed_data.size());
 }
 
 void RendezvousClient::send_keep_alive() {
@@ -31,9 +33,10 @@ void RendezvousClient::send_keep_alive() {
     msg.type = RendezvousMessageType::KEEPALIVE;
 
     const auto data = RendezvousCodec::encode_header(msg);
+    const auto signed_data = HMACAuth::sign(secret_, data);
 
     printf("[rendezvous] sending keepalive - node_id: %lu\n", node_id_);
-    udp_.send_to(vps_endpoint_.ip, vps_endpoint_.port, data.data(), data.size());
+    udp_.send_to(vps_endpoint_.ip, vps_endpoint_.port, signed_data.data(), signed_data.size());
 }
 
 void RendezvousClient::send_request(uint64_t target_node) {
@@ -46,8 +49,9 @@ void RendezvousClient::send_request(uint64_t target_node) {
     msg.private_endpoint.tcp_port = tcp_port_;
 
     const auto data = RendezvousCodec::encode_request(msg);
+    const auto signed_data = HMACAuth::sign(secret_, data);
 
-    udp_.send_to(vps_endpoint_.ip, vps_endpoint_.port, data.data(), data.size());
+    udp_.send_to(vps_endpoint_.ip, vps_endpoint_.port, signed_data.data(), signed_data.size());
 }
 
 void RendezvousClient::handle_notify(Notify* msg) {

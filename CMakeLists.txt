@@ -4,6 +4,7 @@ project(p2p_nat_v2)
 set(CMAKE_CXX_STANDARD 23)
 
 find_package(PkgConfig REQUIRED)
+find_package(OpenSSL REQUIRED)
 pkg_check_modules(OPENDHT REQUIRED IMPORTED_TARGET opendht)
 
 include_directories(src/protocol)
@@ -47,8 +48,8 @@ add_executable(p2p_nat_v2 src/app/main.cpp
         src/rendezvous/punch_target.h
         src/protocol/RendezvousCodec.h
         src/protocol/RendezvousCodec.cpp
-        src/security/hmac_utils.cpp
-        src/security/hmac_utils.h
+        src/protocol/security/hmac_utils.cpp
+        src/protocol/security/hmac_utils.h
 )
 
-target_link_libraries(p2p_nat_v2 PRIVATE PkgConfig::OPENDHT)
+target_link_libraries(p2p_nat_v2 PRIVATE PkgConfig::OPENDHT OpenSSL::Crypto)

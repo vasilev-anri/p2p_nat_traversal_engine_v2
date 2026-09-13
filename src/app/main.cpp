@@ -7,6 +7,7 @@
 #include "../handlers/udp_handler.h"
 #include "../reactor/reactor.h"
 #include "../rendezvous/rendezvous_client.h"
+#include "../protocol/security/hmac_utils.h"
 #include "../utils/tcp_utils.h"
 
 
@@ -20,6 +21,8 @@ void print_startup_logs(uint64_t node_id, uint16_t tcp_port, uint16_t udp_port, 
 
 
 int main(int argc, char* argv[]) {
+
+    auto secret = HMACAuth::load_secret();
 
     Reactor reactor;
 
@@ -42,7 +45,7 @@ int main(int argc, char* argv[]) {
 
     auto listener = std::make_unique<TCPListener>(tcp_port, node_id, udp_port);
 
-    auto udp_sock = std::make_unique<UDPHandler>(udp_port);
+    auto udp_sock = std::make_unique<UDPHandler>(udp_port, secret);
     auto udp_raw = udp_sock.get(); /* saving raw pointer before std::move() */
 
 
@@ -56,7 +59,7 @@ int main(int argc, char* argv[]) {
 
     udp_sock->set_vps_address(inet_addr(vps_ip), VPS_PORT);
 
-    RendezvousClient rendezvous(*udp_raw, tcp_port, node_id, inet_addr(vps_ip), VPS_PORT);
+    RendezvousClient rendezvous(*udp_raw, tcp_port, node_id, inet_addr(vps_ip), VPS_PORT, secret);
 
     udp_sock->set_rendezvous_callback([&rendezvous](const Notify& notify) {
         rendezvous.handle_notify(const_cast<Notify*>(&notify));

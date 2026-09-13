@@ -6,13 +6,14 @@
 #include <sys/socket.h>
 
 #include "../protocol/RendezvousCodec.h"
+#include "../protocol/security/hmac_utils.h"
 #include "../utils/error_utils.h"
 #include "../utils/io_events.h"
 #include "../utils/socket_setup.h"
 #include "../utils/socket_utils.h"
 
 
-UDPHandler::UDPHandler(int port) : port_(port) {
+UDPHandler::UDPHandler(int port, std::vector<uint8_t> secret) : port_(port), secret_(std::move(secret)) {
     fd_ = UniqueFD(::socket(AF_INET, SOCK_DGRAM, 0));
     setup();
 }
@@ -34,6 +35,11 @@ void UDPHandler::handle_event(uint32_t events) {
 
     for (const auto& packet : packets) {
         if (packet.sender.sin_addr.s_addr == vps_endpoint_.ip && packet.sender.sin_port == vps_endpoint_.port) {
+            auto verified = HMACAuth::verify_and_strip(secret_, packet.data);
+            if (!verified) {
+                fprintf(stderr, "[udp] dropped unauthenticated packet from VPS endpoint\n");
+                continue;
+            }
             if (rendezvous_callback_) {
                 auto notify = RendezvousCodec::decode_notify(packet.data);
                 rendezvous_callback_(notify);

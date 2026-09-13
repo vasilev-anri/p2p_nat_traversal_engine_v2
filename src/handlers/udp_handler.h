@@ -14,7 +14,7 @@ public:
     using RendezvousCallback = std::function<void(const Notify&)>;              /* NOTIFY arrives from VPS */
     using PunchCallback = std::function<void(uint32_t ip, uint16_t port)>;      /* punch packet arrives from peer */
 
-    UDPHandler(int port);
+    UDPHandler(int port, std::vector<uint8_t> secret);
     void handle_event(uint32_t events) override;
     void on_tick() override;
     int get_fd() override;
@@ -40,6 +40,8 @@ private:
     std::set<uint32_t> punched_peers_;
 
     static constexpr std::string_view punch_msg_ = "PUNCH";
+
+    std::vector<uint8_t> secret_;
 
 private:
     void setup();
