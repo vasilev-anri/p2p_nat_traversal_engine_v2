@@ -19,7 +19,7 @@ void RendezvousClient::send_register() {
     msg.private_endpoint.udp_port = udp_.get_port_();
     msg.private_endpoint.tcp_port = tcp_port_;
 
-    const auto data = rendezvous_codec::encode_register(msg);
+    const auto data = RendezvousCodec::encode_register(msg);
     const auto signed_data = HMACAuth::sign(secret_, data);
 
     printf("[rendezvous] registering with VPS - node_id: %lu\n", node_id_);
@@ -32,7 +32,7 @@ void RendezvousClient::send_keep_alive() {
     msg.node_id = node_id_;
     msg.type = RendezvousMessageType::KEEPALIVE;
 
-    const auto data = rendezvous_codec::encode_header(msg);
+    const auto data = RendezvousCodec::encode_header(msg);
     const auto signed_data = HMACAuth::sign(secret_, data);
 
     printf("[rendezvous] sending keepalive - node_id: %lu\n", node_id_);
@@ -48,7 +48,7 @@ void RendezvousClient::send_request(uint64_t target_node) {
     msg.private_endpoint.udp_port = udp_.get_port_();
     msg.private_endpoint.tcp_port = tcp_port_;
 
-    const auto data = rendezvous_codec::encode_request(msg);
+    const auto data = RendezvousCodec::encode_request(msg);
     const auto signed_data = HMACAuth::sign(secret_, data);
 
     udp_.send_to(vps_endpoint_.ip, vps_endpoint_.port, signed_data.data(), signed_data.size());
