@@ -5,7 +5,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-#include "../protocol/RendezvousCodec.h"
+#include "../protocol/rendezvous_codec.h"
 #include "../protocol/security/hmac_utils.h"
 #include "../utils/error_utils.h"
 #include "../utils/io_events.h"
@@ -41,7 +41,7 @@ void UDPHandler::handle_event(uint32_t events) {
                 continue;
             }
             if (rendezvous_callback_) {
-                auto notify = RendezvousCodec::decode_notify(packet.data);
+                auto notify = rendezvous_codec::decode_notify(packet.data);
                 rendezvous_callback_(notify);
             }
         }

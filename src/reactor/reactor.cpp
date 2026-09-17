@@ -18,6 +18,7 @@ void Reactor::register_handler(std::unique_ptr<EventHandler> handler, bool want_
     int fd = handler->get_fd();
 
     handler->set_done_callback([this, fd]() { unregister_handler(fd); });
+    handler->set_want_write_callback([this, fd] (bool wants_write) { modify_handler(fd, wants_write); });
 
     epoll_event ev{};
     ev.data.ptr= handler.get();
@@ -34,6 +35,15 @@ void Reactor::unregister_handler(int fd) {
     if (auto res = epoll_ctl_del(epfd_.get(), fd); !res)
         fprintf(stderr, "epoll_ctl_del failed: %s\n", res.error().message().c_str());
     handlers_.erase(fd);
+}
+
+void Reactor::modify_handler(int fd, bool want_write) {
+    epoll_event ev{};
+    ev.data.ptr = handlers_[fd].get();
+    ev.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
+    if (want_write) ev.events |= EPOLLOUT;
+
+    throw_on_error(epoll_ctl_mod(epfd_.get(), fd, &ev));
 }
 
 void Reactor::handle_events() {

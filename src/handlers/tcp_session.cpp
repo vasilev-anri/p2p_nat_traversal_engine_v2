@@ -2,6 +2,7 @@
 
 #include <cstdio>
 #include <random>
+#include <opendht/utils.h>
 #include <sys/socket.h>
 
 #include "../utils/io_events.h"
@@ -37,6 +38,10 @@ void TCPSession::handle_event(uint32_t events) {
         state_ = SessionState::CONNECTED;
         send_hello();
         return;
+    }
+
+    if (events & IOEvents::WRITABLE) {
+        flush();
     }
 
     auto [status, data] = drain_tcp(get_fd());
@@ -143,6 +148,43 @@ void TCPSession::on_tick() {
     send_ping();
 }
 
+void TCPSession::flush() {
+    while (write_offset_ < write_buf_.size()) {
+        ssize_t n = ::send(get_fd(), write_buf_.data() + write_offset_, write_buf_.size() - write_offset_, 0);
+
+        if (n > 0) {
+            write_offset_ += n;
+            continue;
+        }
+
+        if (n == -1) {
+            if (errno == EINTR) continue;
+            if (errno == EAGAIN || errno == EWOULDBLOCK) break;
+            done();
+            return;
+        }
+    }
+
+    if (write_offset_ == write_buf_.size()) {
+        write_buf_.clear();
+        write_offset_ = 0;
+        if (epollout_armed_) {
+            want_write(false);
+            epollout_armed_ = false;
+        }
+    } else {
+        if (!epollout_armed_) {
+            want_write(true);
+            epollout_armed_ = true;
+        }
+    }
+}
+
+void TCPSession::enqueue(std::vector<uint8_t> bytes) {
+    write_buf_.insert(write_buf_.end(), bytes.begin(), bytes.end());
+    flush();
+}
+
 void TCPSession::send_message(MessageType type, std::vector<uint8_t> payload) {
     MessageHeader header{};
     header.magic = MessageHeader::MAGIC;
@@ -152,10 +194,14 @@ void TCPSession::send_message(MessageType type, std::vector<uint8_t> payload) {
     header.session_id = 0;
     header.request_id = 0;
 
-    Message message{};
-    message.header = header;
-    message.payload = payload;
 
-    send_all(get_fd(), message);
+    auto header_bytes = MessageCodec::encode_header(header);
+    std::vector<uint8_t> out;
+    out.reserve(header_bytes.size() + payload.size());
+
+    out.insert(out.end(), header_bytes.begin(), header_bytes.end());
+    out.insert(out.end(), payload.begin(), payload.end());
+
+    enqueue(std::move(out));
 }
 

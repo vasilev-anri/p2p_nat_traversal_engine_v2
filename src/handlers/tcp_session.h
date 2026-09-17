@@ -25,6 +25,9 @@ public:
 
     void on_tick() override;
 
+    void flush();
+    void enqueue(std::vector<uint8_t> bytes);
+
 private:
     void send_message(MessageType type, std::vector<uint8_t> payload);
 
@@ -42,4 +45,9 @@ private:
     uint16_t self_udp_port_;
 
     std::chrono::steady_clock::time_point last_ping_;
+
+    std::vector<uint8_t> write_buf_;
+    size_t write_offset_ = 0;
+
+    bool epollout_armed_ = false;
 };

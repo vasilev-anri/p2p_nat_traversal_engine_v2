@@ -180,9 +180,15 @@ inline std::expected<void, SyscallError> epoll_ctl_del(int epfd, int fd) {
     return {};
 }
 
+inline std::expected<void, SyscallError> epoll_ctl_mod(int epfd, int fd, epoll_event* ev) {
+    if (::epoll_ctl(epfd, EPOLL_CTL_MOD, fd, ev) == -1)
+        return std::unexpected(SyscallError::from_errno("epoll_ctl(MOD)"));
+    return {};
+}
+
 inline std::expected<int, SyscallError> epoll_wait_interruptible(int epfd, epoll_event* events, int maxevents, int timeout) {
     while (true) {
-        int nfds = epoll_wait(epfd, events, maxevents, timeout);
+            int nfds = epoll_wait(epfd, events, maxevents, timeout);
         if (nfds >= 0) return nfds;
         if (errno == EINTR) continue;
         return std::unexpected(SyscallError::from_errno("epoll_wait"));

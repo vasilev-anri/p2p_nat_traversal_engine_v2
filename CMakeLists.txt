@@ -46,8 +46,8 @@ add_executable(p2p_nat_v2 src/app/main.cpp
         src/rendezvous/rendezvous_client.cpp
         src/rendezvous/vps_utils.h
         src/rendezvous/punch_target.h
-        src/protocol/RendezvousCodec.h
-        src/protocol/RendezvousCodec.cpp
+        src/protocol/rendezvous_codec.h
+        src/protocol/rendezvous_codec.cpp
         src/protocol/security/hmac_utils.cpp
         src/protocol/security/hmac_utils.h
         src/utils/dht_utils.h

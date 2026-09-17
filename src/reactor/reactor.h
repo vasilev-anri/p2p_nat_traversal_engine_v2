@@ -12,6 +12,7 @@ public:
     Reactor();
     void register_handler(std::unique_ptr<EventHandler> handler, bool want_write = false);
     void unregister_handler(int fd);
+    void modify_handler(int fd, bool want_write);
     void handle_events();
 private:
     static uint32_t translate_events(uint32_t epoll_events);
