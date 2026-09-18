@@ -77,29 +77,6 @@ inline TCPDrainResult drain_tcp(int fd) {
     }
 }
 
-inline void send_all(int fd, Message& message) {
-    auto header_bytes = MessageCodec::encode_header(message.header);
-
-    std::vector<uint8_t> out;
-    out.reserve(header_bytes.size() + message.payload.size());
-
-    out.insert(out.end(), header_bytes.begin(), header_bytes.end());
-    out.insert(out.end(), message.payload.begin(), message.payload.end());
-
-    size_t total = out.size();
-    size_t sent = 0;
-
-    while (sent < total) {
-        ssize_t n = ::send(fd, out.data() + sent, total - sent, 0);
-        if (n == -1) {
-            if (errno == EINTR) continue;
-            if (errno == EAGAIN || errno == EWOULDBLOCK) continue;
-            return;
-        }
-        sent += n;
-    }
-}
-
 inline UDPDrainResult drain_udp(int fd) {
     UDPDrainResult result{};
 

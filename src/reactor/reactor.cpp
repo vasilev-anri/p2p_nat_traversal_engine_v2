@@ -38,8 +38,10 @@ void Reactor::unregister_handler(int fd) {
 }
 
 void Reactor::modify_handler(int fd, bool want_write) {
+    auto it = handlers_.find(fd);
+    if (it == handlers_.end()) return;
     epoll_event ev{};
-    ev.data.ptr = handlers_[fd].get();
+    ev.data.ptr = it->second.get();
     ev.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
     if (want_write) ev.events |= EPOLLOUT;
 

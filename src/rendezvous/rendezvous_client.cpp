@@ -54,13 +54,13 @@ void RendezvousClient::send_request(uint64_t target_node) {
     udp_.send_to(vps_endpoint_.ip, vps_endpoint_.port, signed_data.data(), signed_data.size());
 }
 
-void RendezvousClient::handle_notify(Notify* msg) {
-    if (notified_peers_.contains(msg->header.node_id)) return;
-    notified_peers_.insert(msg->header.node_id);
+void RendezvousClient::handle_notify(const Notify& msg) {
+    if (notified_peers_.contains(msg.header.node_id)) return;
+    notified_peers_.insert(msg.header.node_id);
 
-    printf("[rendezvous] NOTIFY received from node: %lu\n", msg->header.node_id);
+    printf("[rendezvous] NOTIFY received from node: %lu\n", msg.header.node_id);
     if (notify_callback_) {
-        notify_callback_(msg->header.node_id, msg->public_endpoint, msg->private_endpoint);
+        notify_callback_(msg.header.node_id, msg.public_endpoint, msg.private_endpoint);
     }
 }
 

@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
     RendezvousClient rendezvous(*udp_raw, tcp_port, node_id, inet_addr(vps_ip), VPS_PORT, secret);
 
     udp_sock->set_rendezvous_callback([&rendezvous](const Notify& notify) {
-        rendezvous.handle_notify(const_cast<Notify*>(&notify));
+        rendezvous.handle_notify(notify);
     });
 
     std::set<uint64_t> connected_peers;

@@ -17,7 +17,7 @@ public:
     void send_register();
     void send_keep_alive();
     void send_request(uint64_t target_node);
-    void handle_notify(Notify*);
+    void handle_notify(const Notify& msg);
 
     void set_notify_callback(NotifyCallback cb);
     void on_tick();

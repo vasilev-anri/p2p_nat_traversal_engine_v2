@@ -41,7 +41,7 @@ void UDPHandler::handle_event(uint32_t events) {
                 continue;
             }
             if (rendezvous_callback_) {
-                auto notify = RendezvousCodec::decode_notify(packet.data);
+                auto notify = RendezvousCodec::decode_notify(*verified);
                 rendezvous_callback_(notify);
             }
         }
