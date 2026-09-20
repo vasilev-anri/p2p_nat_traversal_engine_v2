@@ -205,3 +205,6 @@ void TCPSession::send_message(MessageType type, std::vector<uint8_t> payload) {
     enqueue(std::move(out));
 }
 
+bool TCPSession::counts_towards_session_limit() const {
+    return true;
+}

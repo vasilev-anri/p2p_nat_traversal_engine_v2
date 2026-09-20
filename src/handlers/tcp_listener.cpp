@@ -23,6 +23,10 @@ void TCPListener::handle_event(uint32_t events) {
 
     if (events & IOEvents::READABLE) {
         accept_all(get_fd(), [&](UniqueFD cfd) {
+            if (capacity_check_ && !capacity_check_()) {
+                fprintf(stderr, "[tcp] connection limit reached, rejecting new connection\n");
+                return;
+            }
             auto conn = std::make_unique<TCPSession>(std::move(cfd), SessionRole::INBOUND, node_id_, static_cast<uint16_t>(port_), udp_port_);
             if (on_accept_) on_accept_(std::move(conn));
         });
@@ -40,5 +44,9 @@ void TCPListener::setup() {
 
 void TCPListener::set_event_callback(SessionCallback cb) {
     on_accept_ = std::move(cb);
+}
+
+void TCPListener::set_capacity_check_callback(CapacityCheckCallback cb) {
+    capacity_check_ = std::move(cb);
 }
 

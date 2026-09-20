@@ -93,6 +93,12 @@ int main(int argc, char* argv[]) {
         }
     );
 
+    listener->set_capacity_check_callback(
+        [&reactor]() {
+            return reactor.has_capacity();
+        }
+    );
+
     reactor.register_handler(std::move(listener));
     reactor.register_handler(std::move(udp_sock));
 

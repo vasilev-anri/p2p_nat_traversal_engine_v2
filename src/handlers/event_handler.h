@@ -21,6 +21,8 @@ public:
     virtual int get_fd() = 0;
     virtual void on_tick() {};
 
+    virtual bool counts_towards_session_limit() const { return false; }
+
 protected:
     void done() {
         if (on_done_) on_done_();

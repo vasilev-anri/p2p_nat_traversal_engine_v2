@@ -28,10 +28,13 @@ void Reactor::register_handler(std::unique_ptr<EventHandler> handler, bool want_
     if (auto res = epoll_ctl_add(epfd_.get(), fd, &ev); !res)
         throw std::runtime_error(res.error().message());
 
+    if (handler->counts_towards_session_limit()) ++session_count_;
+
     handlers_[fd] = std::move(handler);
 }
 
 void Reactor::unregister_handler(int fd) {
+    if (auto it = handlers_.find(fd); it != handlers_.end() && it->second->counts_towards_session_limit()) --session_count_;
     if (auto res = epoll_ctl_del(epfd_.get(), fd); !res)
         fprintf(stderr, "epoll_ctl_del failed: %s\n", res.error().message().c_str());
     handlers_.erase(fd);
@@ -63,6 +66,10 @@ void Reactor::handle_events() {
     for (auto& handler : handlers_ | std::views::values) {
         handler->on_tick();
     }
+}
+
+bool Reactor::has_capacity() const {
+    return session_count_ < MAX_TRACKED_SESSIONS;
 }
 
 uint32_t Reactor::translate_events(uint32_t epoll_events) {

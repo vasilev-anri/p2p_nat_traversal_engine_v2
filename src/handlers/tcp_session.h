@@ -28,6 +28,8 @@ public:
     void flush();
     void enqueue(std::vector<uint8_t> bytes);
 
+    bool counts_towards_session_limit() const override;
+
 private:
     void send_message(MessageType type, std::vector<uint8_t> payload);
 
