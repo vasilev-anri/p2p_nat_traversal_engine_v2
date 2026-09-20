@@ -39,6 +39,11 @@ void accept_all(int fd, Callback cb) {
 
 // socket() -> set_nonblocking() -> connect() -> CONNECTED || CONNECTING -> register via epoll
 inline void connect_to_peer(Reactor& reactor, const std::string& ip, uint16_t port, uint64_t node_id, uint16_t self_tcp_port, uint16_t self_udp_port) {
+    if (!reactor.has_capacity()) {
+        fprintf(stderr, "[tcp] connection limit reached, skipping outbound connection\n");
+        return;
+    }
+
     auto fd = UniqueFD(::socket(AF_INET, SOCK_STREAM, 0));
     if (!fd.is_valid()) return;
 
