@@ -82,8 +82,8 @@ int main(int argc, char* argv[]) {
 
     });
 
-    udp_sock->set_punch_callback([udp_raw](uint32_t ip, uint16_t port) {
-        udp_raw->mark_punch_success(ip, port);
+    udp_sock->set_punch_callback([udp_raw](uint64_t peer_id, uint32_t ip, uint16_t port) {
+        udp_raw->mark_punch_success(peer_id, ip, port);
     });
 
 

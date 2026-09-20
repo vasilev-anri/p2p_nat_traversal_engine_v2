@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <set>
 
 #include "event_handler.h"
@@ -12,7 +13,7 @@
 class UDPHandler : public EventHandler {
 public:
     using RendezvousCallback = std::function<void(const Notify&)>;              /* NOTIFY arrives from VPS */
-    using PunchCallback = std::function<void(uint32_t ip, uint16_t port)>;      /* punch packet arrives from peer */
+    using PunchCallback = std::function<void(uint64_t node_id, uint32_t ip, uint16_t port)>;      /* punch packet arrives from peer */
 
     UDPHandler(int port, std::vector<uint8_t> secret);
     void handle_event(uint32_t events) override;
@@ -27,7 +28,7 @@ public:
 
     void setup_punch(uint64_t node_id, uint32_t public_ip, uint16_t public_port, uint32_t private_ip, uint16_t private_port);
 
-    void mark_punch_success(uint32_t ip, uint16_t port);
+    void mark_punch_success(uint64_t node_id, uint32_t ip, uint16_t port);
 
 private:
     UniqueFD fd_;
@@ -37,11 +38,13 @@ private:
     PunchCallback punch_callback_;
     std::vector<PunchTarget> punch_targets_;
 
-    std::set<uint32_t> punched_peers_;
+    std::set<uint64_t> punched_peers_;
 
     static constexpr std::string_view punch_msg_ = "PUNCH";
 
     std::vector<uint8_t> secret_;
+
+    std::map<EndpointKey, uint64_t> endpoint_to_node_;
 
 private:
     void setup();

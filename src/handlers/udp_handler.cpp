@@ -47,7 +47,12 @@ void UDPHandler::handle_event(uint32_t events) {
         }
         else {
             if (punch_callback_) {
-                punch_callback_(packet.sender.sin_addr.s_addr, packet.sender.sin_port);
+                uint32_t ip = packet.sender.sin_addr.s_addr;
+                uint16_t port = ntohs(packet.sender.sin_port);
+
+                auto it = endpoint_to_node_.find({ip, port});
+
+                if (it != endpoint_to_node_.end()) punch_callback_(it->second, ip, port);
             }
         }
     }
@@ -67,7 +72,14 @@ void UDPHandler::on_tick() {
         target.next_send = time_point + std::chrono::milliseconds(30);
     }
 
-    std::erase_if(punch_targets_, [](const PunchTarget& t) { return t.remaining_sends <= 0 || t.success; });
+    std::erase_if(punch_targets_, [&](const PunchTarget& t) {
+        if (t.remaining_sends <= 0 || t.success) {
+            endpoint_to_node_.erase({t.public_endpoint.ip, t.public_endpoint.port});
+            endpoint_to_node_.erase({t.private_endpoint.ip, t.private_endpoint.port});
+            return true;
+        }
+        return false;
+    });
 }
 
 int UDPHandler::get_fd() {
@@ -122,16 +134,19 @@ void UDPHandler::setup_punch(uint64_t node_id, uint32_t public_ip, uint16_t publ
         .next_send = std::chrono::steady_clock::now()
     };
 
+    endpoint_to_node_.try_emplace({public_ip, public_port}, node_id);
+    endpoint_to_node_.try_emplace({private_ip, private_port}, node_id);
+
     punch_targets_.push_back(punch_target);
 }
 
-void UDPHandler::mark_punch_success(uint32_t ip, uint16_t port) {
-    if (punched_peers_.contains(ip)) return;
-    punched_peers_.insert(ip);
-    printf("[punch] hole opened <-- %s:%d\n", ip_to_str(htonl(ip)).c_str(), ntohs(port));
+void UDPHandler::mark_punch_success(uint64_t node_id, uint32_t ip, uint16_t port) {
+    if (punched_peers_.contains(node_id)) return;
+    punched_peers_.insert(node_id);
+    printf("[punch] hole opened for node %lu <-- %s:%d\n", node_id, ip_to_str(ntohl(ip)).c_str(), port);
 
     for (auto& target : punch_targets_) {
-        if (target.public_endpoint.ip == ip || target.private_endpoint.ip == ip) {
+        if (target.node_id == node_id) {
             target.success = true;
         }
     }
