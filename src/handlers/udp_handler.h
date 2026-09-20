@@ -12,6 +12,8 @@
 
 class UDPHandler : public EventHandler {
 public:
+    static constexpr size_t MAX_PUNCH_TARGETS = 128;
+
     using RendezvousCallback = std::function<void(const Notify&)>;              /* NOTIFY arrives from VPS */
     using PunchCallback = std::function<void(uint64_t node_id, uint32_t ip, uint16_t port)>;      /* punch packet arrives from peer */
 

@@ -120,6 +120,11 @@ void UDPHandler::set_punch_callback(PunchCallback cb) {
 
 void UDPHandler::setup_punch(uint64_t node_id, uint32_t public_ip, uint16_t public_port, uint32_t private_ip, uint16_t private_port) {
 
+    if (punch_targets_.size() >= MAX_PUNCH_TARGETS) {
+        fprintf(stderr, "[punch] target limit reached, ignoring new punch\n");
+        return;
+    }
+
     PunchTarget punch_target {
         .node_id = node_id,
         .public_endpoint = {
