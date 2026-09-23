@@ -1,1 +1,3 @@
-# p2p_nat_traversal_engine_v2
+# P2P NAT Traversal Engine
+
+A peer-to-peer Network Address Translation (NAT) traversal and connection-establishment engine
