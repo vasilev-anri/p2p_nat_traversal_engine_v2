@@ -27,3 +27,9 @@ NAT traversal is a critically important issue in modern real-time internet commu
 
 * Adapted from Figure 5 in Ford, Srisuresh & Kegel (2005)
 * The red path shows one possible dropped first packet, if it arrives before that peer's own outbound packet has opened its NAT's hole. Since both peers keep sending, each side's hole still opens shortly after, and once both are open, communication proceeds normally in both directions.
+
+
+## References
+
+[1] B. Ford, P. Srisuresh, and D. Kegel, "Peer-to-peer communication across network address translators," in Proc. USENIX Annual Technical Conference, 2005, pp. 179–192.
+
