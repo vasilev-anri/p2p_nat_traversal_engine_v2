@@ -24,3 +24,5 @@ NAT traversal is a critically important issue in modern real-time internet commu
 
 
 ![UDP hole punching process, adapted from Ford, Srisuresh & Kegel (2005)](docs/images/hole-punching-diagram.png)
+
+* Adapted from Figure 5 in Ford, Srisuresh & Kegel (2005)
