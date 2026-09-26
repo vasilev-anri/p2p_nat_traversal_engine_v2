@@ -33,3 +33,9 @@ NAT traversal is a critically important issue in modern real-time internet commu
 
 [1] B. Ford, P. Srisuresh, and D. Kegel, "Peer-to-peer communication across network address translators," in Proc. USENIX Annual Technical Conference, 2005, pp. 179–192.
 
+
+## Acknowledgements
+
+My first introduction to socket programming came from Beej's Guide to Network Programming Using Internet Sockets by Brian "Beej" Hall (Revision 2.3.1, 2001). At the time, I was simply experimenting with system calls and building small client-server programs, long before I planned this project. I occasionally returned to the later edition (v3.3.2) by Brian "Beej Jorgensen" Hall as I continued learning.
+
+Many thanks to Brian Hall for creating such a clear and accessible resource for learning network programming.
