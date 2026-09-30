@@ -12,6 +12,18 @@ NAT traversal is a critically important issue in modern real-time internet commu
 
 #
 
+NAT is used to modify source and/or destination IP addresses and/or ports. It enables private networks to use the Internet or the cloud. In other words, it translates private IP addresses in a private network to a public network address before packets are sent to an external network. It can also translate port numbers, allowing multiple devices on a private network to share the same public IP address.
+
+
+The NAT device creates a state/translation entry: private endpoint <-> public endpoint.
+If NAT finds a public address-to-private address match in the entry, it translates the destination and forwards the packet.
+
+As for unsolicited incoming packets, if NAT is unable to find a translation entry telling which private host should receive a packet, the NAT device cannot perform the required translation; consequently, the packet is dropped
+
+![NAPT traversal process](docs/images/nat-success-diagram.png)
+
+#
+
 - Event Poll-based single-threaded reactor (Edge-Triggered Notification mode)
 - DHT-based peer discovery (Kademlia OpenDHT)
 - Authenticated rendezvous protocol (HMAC-SHA256 with replay protection)
