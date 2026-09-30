@@ -20,7 +20,8 @@ If NAT finds a public address-to-private address match in the entry, it translat
 
 As for unsolicited incoming packets, if NAT is unable to find a translation entry telling which private host should receive a packet, the NAT device cannot perform the required translation; consequently, the packet is dropped
 
-![NAPT traversal process](docs/images/nat-success-diagram.png)
+![NAPT traversal process - success](docs/images/nat-success-diagram.png)
+![NAPT traversal process - faiulure](docs/images/nat-failure-drop-diagram.png)
 
 #
 
