@@ -52,6 +52,8 @@ Both peers must have an active UDP *session* with the rendezvous server S. To ac
 
 Here, session refers to a software-managed "session built on top of connectionless UDP datagram sockets. The client periodically sends 'KEEPALIVE' messages(heartbeat packets) to the server to keep NAT mappings open, thus letting it know that the peer is still alive, and keep NAT/NAPT port mappings alive [1], even though UDP itself establishes no persistent connection or session.
 
+Once an engine knows its public IP, it announces itself on the DHT under the room key and listens for other peers announcing under the same key (see the DHT section below). When an engine discovers a peer, it learns that peer's node ID and sends a `REQUEST` to the rendezvous server S, containing its own private endpoint and the target's node ID. Both peers do this independently and at about the same time, so there is no single initiator and launch order doesn't matter. S already holds both peers' endpoints from registration, and replies with a `NOTIFY` to each peer carrying the other's public and private endpoints. On `NOTIFY`, each engine starts sending UDP packets to both of the other peer's endpoints (the punch) and, at the same moment, attempts a plain outbound TCP connection to the peer's public endpoint.
+
 ## References
 
 [1] B. Ford, P. Srisuresh, and D. Kegel, "Peer-to-peer communication across network address translators," in Proc. USENIX Annual Technical Conference, 2005, pp. 179–192.
