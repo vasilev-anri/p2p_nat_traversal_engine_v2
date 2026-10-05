@@ -46,6 +46,11 @@ UDP hole punching exploits outbound traffic to establish the necessary NAT mappi
 * Adapted from Figure 5 in Ford, Srisuresh & Kegel (2005)
 * The red path shows one possible dropped first packet, if it arrives before that peer's own outbound packet has opened its NAT's hole. Since both peers keep sending, each side's hole still opens shortly after, and once both are open, communication proceeds normally in both directions.
 
+#### Establishing a connection between peers A and B.
+
+Both peers must have an active UDP *session*[^1] with the rendezvous server S. Before that, both clients must register themselves with the server by sending a `REGISTER` message and letting the server know about their private endpoint (IP and port), so that the server will have both the private endpoint and the public endpoint; the latter is acquired from the translated source endpoint of the packet as observed by the server (usually, the public IP and UDP port that the NAPT assigned to the flow/mapping). If a peer is not behind a NAT/NAPT, its private and public endpoints should be identical.
+
+[^1]: Here, session refers to a software-managed "session built on top of connectionless UDP diagram sockets. The client and server periodically exchange heartbeat packets to maintain application-level state and keep NAT/NAPT port mappings alive, creating the illusion of a continuous two-way connection even though UDP itself establishes no persistent connection or session.
 
 ## References
 
