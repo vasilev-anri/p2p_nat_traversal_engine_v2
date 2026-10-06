@@ -23,9 +23,13 @@ public:
 
     virtual bool counts_towards_session_limit() const { return false; }
 
+    bool is_done() const { return done_; }
+
 protected:
     void done() {
-        if (on_done_) on_done_();
+        if (done_ || !on_done_) return;
+        done_ = true;
+        on_done_();
     }
 
     void want_write(bool wants_write) {
@@ -35,4 +39,5 @@ protected:
 private:
     DoneCallback on_done_;
     WantWriteCallback on_want_write_;
+    bool done_ = false;
 };

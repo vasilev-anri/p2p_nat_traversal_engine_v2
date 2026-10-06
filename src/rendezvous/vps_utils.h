@@ -1,15 +1,36 @@
 #pragma once
+
 #include <cstdint>
 #include <ifaddrs.h>
-#include <iostream>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <cstdlib>
+#include <stdexcept>
+#include <string>
 
 struct VPSEndpoint {
     uint32_t ip;
     uint16_t port;
 };
 
+inline std::string load_vps_ip() {
+    const char* raw = std::getenv("P2P_VPS_IP");
+    if (raw == nullptr) throw std::runtime_error("Environment variable P2P_VPS_IP not set");
+
+    std::string ip(raw);
+
+    constexpr const char* whitespace = " \t\n\r\f\v";
+    ip.erase(0, ip.find_first_not_of(whitespace));
+    ip.erase(ip.find_last_not_of(whitespace) + 1);
+
+    if (ip.empty()) throw std::runtime_error("Environment variable P2P_VPS_IP can not be empty");
+
+    in_addr temp{};
+    if (inet_pton(AF_INET, ip.c_str(), &temp) != 1)
+        throw std::runtime_error("Environment variable P2P_VPS_IP is not a valid IPv4 address: " + ip);
+
+    return ip;
+}
 
 inline uint32_t get_private_ip() {
     ifaddrs* interfaces = nullptr;

@@ -17,7 +17,7 @@ Reactor::Reactor() {
 void Reactor::register_handler(std::unique_ptr<EventHandler> handler, bool want_write) {
     int fd = handler->get_fd();
 
-    handler->set_done_callback([this, fd]() { unregister_handler(fd); });
+    handler->set_done_callback([this, h = handler.get()]() { schedule_removal(h); });
     handler->set_want_write_callback([this, fd] (bool wants_write) { modify_handler(fd, wants_write); });
 
     epoll_event ev{};
@@ -60,12 +60,15 @@ void Reactor::handle_events() {
     const int nfds = result.value();
     for (int i = 0; i < nfds; ++i) {
         auto* handler = static_cast<EventHandler*>(events[i].data.ptr);
+        if (handler->is_done()) continue;
         handler->handle_event(translate_events(events[i].events));
     }
 
     for (auto& handler : handlers_ | std::views::values) {
-        handler->on_tick();
+        if (!handler->is_done()) handler->on_tick();
     }
+
+    reap_closed();
 }
 
 bool Reactor::has_capacity() const {
@@ -81,4 +84,13 @@ uint32_t Reactor::translate_events(uint32_t epoll_events) {
     if (epoll_events & EPOLLERR) result |= IOEvents::ERROR;
 
     return result;
+}
+
+void Reactor::schedule_removal(EventHandler *handler) {
+    pending_removal_.push_back(handler);
+}
+
+void Reactor::reap_closed() {
+    for (auto* handler : pending_removal_) unregister_handler(handler->get_fd());
+    pending_removal_.clear();
 }

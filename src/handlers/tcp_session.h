@@ -38,7 +38,7 @@ private:
     MessageParser parser_;
 
     SessionState state_;
-    Peer peer_;
+    Peer peer_{};
 
     SessionRole role_;
 

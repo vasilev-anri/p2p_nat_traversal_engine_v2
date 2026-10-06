@@ -7,6 +7,7 @@
 #include "../handlers/udp_handler.h"
 #include "../reactor/reactor.h"
 #include "../rendezvous/rendezvous_client.h"
+#include "../rendezvous/vps_utils.h"
 #include "../protocol/security/hmac_utils.h"
 #include "../utils/dht_utils.h"
 #include "../utils/tcp_utils.h"
@@ -21,7 +22,7 @@ void print_startup_logs(uint64_t node_id, uint16_t tcp_port, uint16_t udp_port, 
 }
 
 
-int main(int argc, char* argv[]) {
+int main() {
 
     auto secret = HMACAuth::load_secret();
     auto room_key = load_room_key();
@@ -32,7 +33,7 @@ int main(int argc, char* argv[]) {
     int udp_port = 9090;
 
     // vps addr
-    const char* vps_ip = "62.238.114.216";
+    const std::string vps_ip = load_vps_ip();
     constexpr uint16_t VPS_PORT = 9999;
 
 
@@ -52,16 +53,11 @@ int main(int argc, char* argv[]) {
 
 
 
+    print_startup_logs(node_id, tcp_port, udp_port, vps_ip.c_str(), VPS_PORT);
 
-    for (int i = 1; i < argc; i++) {
-        if (std::string(argv[i]) == "--vps" && i + 1 < argc) vps_ip = argv[i + 1];
-    }
+    udp_sock->set_vps_address(inet_addr(vps_ip.c_str()), VPS_PORT);
 
-    print_startup_logs(node_id, tcp_port, udp_port, vps_ip, VPS_PORT);
-
-    udp_sock->set_vps_address(inet_addr(vps_ip), VPS_PORT);
-
-    RendezvousClient rendezvous(*udp_raw, tcp_port, node_id, inet_addr(vps_ip), VPS_PORT, secret);
+    RendezvousClient rendezvous(*udp_raw, tcp_port, node_id, inet_addr(vps_ip.c_str()), VPS_PORT, secret);
 
     udp_sock->set_rendezvous_callback([&rendezvous](const Notify& notify) {
         rendezvous.handle_notify(notify);
@@ -122,8 +118,6 @@ int main(int argc, char* argv[]) {
         // ask rendezvous to coordinate punch
         rendezvous.send_request(peer.node_id);
     });
-
-    // dht.announce();
 
 
     for (;;) {

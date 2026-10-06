@@ -17,10 +17,14 @@ public:
     void modify_handler(int fd, bool want_write);
     void handle_events();
     bool has_capacity() const;
+
+    void schedule_removal(EventHandler* handler);
+    void reap_closed();
 private:
     static uint32_t translate_events(uint32_t epoll_events);
 private:
     UniqueFD epfd_;
     std::unordered_map<int, std::unique_ptr<EventHandler>> handlers_;
+    std::vector<EventHandler*> pending_removal_;
     size_t session_count_ = 0;
 };

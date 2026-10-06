@@ -2,7 +2,6 @@
 
 #include <cstdio>
 #include <random>
-#include <opendht/utils.h>
 #include <sys/socket.h>
 
 #include "../utils/io_events.h"
@@ -42,6 +41,7 @@ void TCPSession::handle_event(uint32_t events) {
 
     if (events & IOEvents::WRITABLE) {
         flush();
+        if (is_done()) return;
     }
 
     auto [status, data] = drain_tcp(get_fd());
@@ -52,7 +52,7 @@ void TCPSession::handle_event(uint32_t events) {
 
     parser_.feed(data);
     Message message{};
-    while (parser_.next(message)) {
+    while (!is_done() && parser_.next(message)) {
         on_message(message);
     }
 
@@ -129,6 +129,7 @@ void TCPSession::send_ping() {
     auto payload = MessageCodec::encode_ping(ping);
 
     send_message(MessageType::ping, payload);
+    last_ping_ = std::chrono::steady_clock::now();
 }
 
 void TCPSession::send_pong(uint64_t nonce) {
@@ -150,7 +151,7 @@ void TCPSession::on_tick() {
 
 void TCPSession::flush() {
     while (write_offset_ < write_buf_.size()) {
-        ssize_t n = ::send(get_fd(), write_buf_.data() + write_offset_, write_buf_.size() - write_offset_, 0);
+        ssize_t n = ::send(get_fd(), write_buf_.data() + write_offset_, write_buf_.size() - write_offset_, MSG_NOSIGNAL);
 
         if (n > 0) {
             write_offset_ += n;

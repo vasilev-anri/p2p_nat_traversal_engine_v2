@@ -23,6 +23,7 @@ void DHTNode::announce() {
 void DHTNode::discover(PeerDiscoveryCallback cb) {
     auto key = dht::InfoHash::get(room_key_);
     auto token = node_.listen(key, [this, cb](const std::vector<std::shared_ptr<dht::Value>>& values, bool expired) {
+        if (expired) return true;
         for (const auto& value : values) {
             Peer peer = deserialize(value->data);
             if (peer.node_id == self_.node_id) continue;
@@ -43,14 +44,14 @@ void DHTNode::try_set_public_ip() {
     for (const auto& addr : node_.getPublicAddress(AF_INET)) {
         if (!addr.isPrivate() && !addr.isLoopback()) {
             self_.ip = ntohl(addr.getIPv4().sin_addr.s_addr);
+            public_ip_.store(self_.ip);
 
             //network bye order for print
             in_addr tmp{};
             tmp.s_addr = htonl(self_.ip);
             printf("[info] public ip: %s\n", inet_ntoa(tmp));
 
-            // Re-announce() with the real IP. The first announce() at startup publishes ip = 0 (almost always)
-            // this call updates it
+            // publish the record now that the real public IP is known
             announce();
             break;
         }
@@ -58,5 +59,5 @@ void DHTNode::try_set_public_ip() {
 }
 
 uint32_t DHTNode::get_self_ip() const {
-    return self_.ip;
+    return public_ip_.load();
 }

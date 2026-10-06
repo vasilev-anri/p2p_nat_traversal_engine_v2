@@ -1,7 +1,9 @@
 #pragma once
 
+#include <atomic>
 #include <opendht.h>
 #include <functional>
+
 #include "../peer/peer.h"
 
 
@@ -23,5 +25,6 @@ public:
 private:
     dht::DhtRunner node_;
     Peer self_{};
+    std::atomic<uint32_t> public_ip_{0};
     std::string room_key_;
 };
