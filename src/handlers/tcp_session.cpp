@@ -50,11 +50,21 @@ void TCPSession::handle_event(uint32_t events) {
         return;
     }
 
-    parser_.feed(data);
-    Message message{};
-    while (!is_done() && parser_.next(message)) {
-        on_message(message);
+    try {
+        parser_.feed(data);
+        Message message{};
+        while (!is_done() && parser_.next(message)) {
+            on_message(message);
+        }
+    } catch (const std::exception& e) {
+        fprintf(stderr, "[tcp] protocol error: %s | role=%s | first bytes:",
+                e.what(), role_ == SessionRole::OUTBOUND ? "outbound" : "inbound");
+        for (size_t i = 0; i < data.size() && i < 16; ++i) fprintf(stderr, " %02x", data[i]);
+        fprintf(stderr, "\n");
+        done();
+        return;
     }
+
 
     if (events & IOEvents::CLOSED) {
         done();
