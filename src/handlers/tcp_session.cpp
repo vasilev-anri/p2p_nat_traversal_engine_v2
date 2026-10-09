@@ -20,6 +20,13 @@ TCPSession::TCPSession(UniqueFD fd, SessionRole role, uint64_t node_id, uint16_t
 
 void TCPSession::handle_event(uint32_t events) {
     if (events & IOEvents::ERROR) {
+        int err = 0;
+        socklen_t len = sizeof(err);
+        getsockopt(get_fd(), SOL_SOCKET, SO_ERROR, &err, &len);
+        if (state_ == SessionState::CONNECTING)
+            fprintf(stderr, "[tcp] outbound connect failed: %s\n", err ? strerror(err) : "unknown error");
+        else
+            fprintf(stderr, "[tcp] socket error: %s\n", err ? strerror(err) : "unknown error");
         done();
         return;
     }
