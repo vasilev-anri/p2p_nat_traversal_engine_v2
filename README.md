@@ -21,7 +21,7 @@ If NAT finds a public address-to-private address match in the entry, it translat
 As for unsolicited incoming packets, if NAT is unable to find a translation entry telling which private host should receive a packet, the NAT device cannot perform the required translation; consequently, the packet is dropped
 
 ![NAPT traversal process - success](docs/images/nat-success-diagram.png)
-![NAPT traversal process - faiulure](docs/images/nat-failure-drop-diagram.png)
+![NAPT traversal process - failure](docs/images/nat-failure-drop-diagram.png)
 
 #
 
@@ -54,6 +54,12 @@ Here, session refers to a software-managed "session built on top of connectionle
 
 Once an engine knows its public IP, it announces itself on the DHT under the room key and listens for other peers announcing under the same key (see the DHT section below). When an engine discovers a peer, it learns that peer's node ID and sends a `REQUEST` to the rendezvous server S, containing its own private endpoint and the target's node ID. Both peers do this independently and at about the same time, so there is no single initiator and launch order doesn't matter. S already holds both peers' endpoints from registration, and replies with a `NOTIFY` to each peer carrying the other's public and private endpoints. On `NOTIFY`, each engine starts sending UDP packets to both of the other peer's endpoints (the punch) and, at the same moment, attempts a plain outbound TCP connection to the peer's public endpoint.
 
+## Peer discovery with a DHT
+
+The DHT is used solely for peer discovery and has nothing to do with establishing the connection itself. It only lets peers find out that other peers exist, and it provides no mechanism for connectivity, even though it uses UDP under the hood.
+
+The engine uses OpenDHT, a library implementing a Kademlia-based DHT [2]. Kademlia is a proven design: BitTorrent's peer discovery is based on it, as are several other large peer-to-peer networks (eMule's Kad network, and libp2p, the networking layer behind IPFS).
+
 ## Architecture
 
 ![Architecture. Main thread: reactor & handlers; DHT Thread](docs/images/architecture-diagram.png)
@@ -62,8 +68,8 @@ Once an engine knows its public IP, it announces itself on the DHT under the roo
 
 ## References
 
-[1] B. Ford, P. Srisuresh, and D. Kegel, "Peer-to-peer communication across network address translators," in Proc. USENIX Annual Technical Conference, 2005, pp. 179–192.
-
+[1] B. Ford, P. Srisuresh, and D. Kegel, "Peer-to-peer communication across network address translators," in Proc. USENIX Annual Technical Conference, 2005, pp. 179–192.  
+[2] P. Maymounkov and D. Mazières, "Kademlia: A peer-to-peer information system based on the XOR metric," in Peer-to-Peer Systems: First International Workshop, IPTPS 2002, P. Druschel, F. Kaashoek, and A. Rowstron, Eds., ser. Lecture Notes in Computer Science, vol. 2429. Springer, 2002, pp. 53–65.
 
 ## Acknowledgements
 
