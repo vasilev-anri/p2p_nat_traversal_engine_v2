@@ -56,9 +56,17 @@ Once an engine knows its public IP, it announces itself on the DHT under the roo
 
 ## Peer discovery with a DHT
 
-The DHT is used solely for peer discovery and has nothing to do with establishing the connection itself. It only lets peers find out that other peers exist, and it provides no mechanism for connectivity, even though it uses UDP under the hood.
+The DHT is used solely for peer discovery and has nothing to do with establishing the connection itself. It only lets peers find out that other peers exist, and it provides no mechanism for connectivity, even though it uses UDP under the hood. In this section, "peer" and "node" mean the same thing: a participant in the network.
 
-The engine uses OpenDHT, a library implementing a Kademlia-based DHT [2]. Kademlia is a proven design: BitTorrent's peer discovery is based on it, as are several other large peer-to-peer networks (eMule's Kad network, and libp2p, the networking layer behind IPFS).
+The engine builds on Kademlia [2], a proven design: BitTorrent's peer discovery is based on it, as are several other large peer-to-peer networks (eMule's Kad network, and libp2p, the networking layer behind IPFS). It uses OpenDHT, a C++ implementation of the Kademlia DHT [3].
+
+The peer joins the network through a public bootstrap node, `bootstrap.jami.net:4222`, the same one used in OpenDHT's own examples [3]. A node can join through any node that is already connected [3], and a Kademlia node needs one such contact to get in [2], so there is no fixed list of peers, but there is one fixed entry point.
+
+The room key `P2P_ROOM_KEY` is hashed into the 160-bit DHT key under which records are stored [3]. It works like a channel name: peers with the same key find each other, and peers with a different key never see each other's records. It is not a secret, and the records are neither signed nor encrypted.
+
+Once the node knows its public IP, it announces itself by publishing a record containing its node ID, public IP, and local TCP & UDP ports, and it listens on the same key. Records expire after approximately 10 minutes unless refreshed [3]; The engine currently announces once. When another peer's record appears, the engine ignores its own record and any record without an IP, and treats the rest as a discovered peer. The record is not enough to connect: the ports in it are local, and the public port is known only to the rendezvous server, so the next step is a `REQUEST` message to that server. OpenDHT runs on its own thread and calls the discovery callback from it [3].
+
+
 
 ## Architecture
 
@@ -69,7 +77,8 @@ The engine uses OpenDHT, a library implementing a Kademlia-based DHT [2]. Kademl
 ## References
 
 [1] B. Ford, P. Srisuresh, and D. Kegel, "Peer-to-peer communication across network address translators," in Proc. USENIX Annual Technical Conference, 2005, pp. 179–192.  
-[2] P. Maymounkov and D. Mazières, "Kademlia: A peer-to-peer information system based on the XOR metric," in Peer-to-Peer Systems: First International Workshop, IPTPS 2002, P. Druschel, F. Kaashoek, and A. Rowstron, Eds., ser. Lecture Notes in Computer Science, vol. 2429. Springer, 2002, pp. 53–65.
+[2] P. Maymounkov and D. Mazières, "Kademlia: A peer-to-peer information system based on the XOR metric," in Peer-to-Peer Systems: First International Workshop, IPTPS 2002, P. Druschel, F. Kaashoek, and A. Rowstron, Eds., ser. Lecture Notes in Computer Science, vol. 2429. Springer, 2002, pp. 53–65.  
+[3] Savoir-faire Linux, "OpenDHT: A lightweight C++17 Distributed Hash Table implementation", GitHub repository. [Online]. Available: https://github.com/savoirfairelinux/opendht
 
 ## Acknowledgements
 
