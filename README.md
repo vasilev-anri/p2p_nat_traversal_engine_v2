@@ -78,7 +78,8 @@ Once the node knows its public IP, it announces itself by publishing a record co
 
 [1] B. Ford, P. Srisuresh, and D. Kegel, "Peer-to-peer communication across network address translators," in Proc. USENIX Annual Technical Conference, 2005, pp. 179–192.  
 [2] P. Maymounkov and D. Mazières, "Kademlia: A peer-to-peer information system based on the XOR metric," in Peer-to-Peer Systems: First International Workshop, IPTPS 2002, P. Druschel, F. Kaashoek, and A. Rowstron, Eds., ser. Lecture Notes in Computer Science, vol. 2429. Springer, 2002, pp. 53–65.  
-[3] Savoir-faire Linux, "OpenDHT: A lightweight C++17 Distributed Hash Table implementation", GitHub repository. [Online]. Available: https://github.com/savoirfairelinux/opendht
+[3] Savoir-faire Linux, "OpenDHT: A lightweight C++17 Distributed Hash Table implementation", GitHub repository. [Online]. Available: https://github.com/savoirfairelinux/opendht. [Accessed: Oct. 11, 2026].    
+[4] M. Kerrisk, "THE LINUX PROGRAMMING INTERFACE, A Linux and UNIX® System Programming Handbook", San Francisco, CA, No Starch Press, Inc. 2010, ch. 63, pp. 1355-1367.
 
 ## Acknowledgements
 
