@@ -114,6 +114,8 @@ Logs from one side of the last mobile-to-mobile run, with addresses replaced wit
 
 UDP Path is established when each peer receives a punch packet from the other. The TCP Session is established when the `HELLO` handshake is completed.
 
+The UDP punch worked in all four runs. The TCP connection did not form in any of them, which is expected: the engine makes only a plain outbound connect, so each peer's connection attempt arrives at the other's NAT with no matching outgoing session, and a traditional NAT treats such traffic as unsolicited [1]. The logs are consistent with this but do not prove it. Getting a session between two NATed peers would need TCP hole punching or a relay (see Roadmap).
+
 ## References
 
 [1] B. Ford, P. Srisuresh, and D. Kegel, "Peer-to-peer communication across network address translators," in Proc. USENIX Annual Technical Conference, 2005, pp. 179–192.  
