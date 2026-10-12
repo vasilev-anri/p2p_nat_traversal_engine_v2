@@ -8,7 +8,7 @@ Devices behind home Wi-Fi or mobile networks often cannot connect directly to ea
 
 
 
-NAT traversal is a critically important issue in modern real-time internet communication, not a solved or trivial one. This project addresses it with Distributed Hash Table (DHT)-based peer discovery (no fixed server list, no manual IP exchange), an authenticated rendezvous protocol that coordinates the connection using HMAC, and UDP hole punching combined with TCP connect. It has been tested on real hardware - a local machine and a VPS - not just in theory. This is the connection-establishment layer: infrastructure for getting peers talking, not a full chat or file-sharing application.
+NAT traversal is a critically important issue in modern real-time internet communication, not a solved or trivial one. This project addresses it with Distributed Hash Table (DHT)-based peer discovery (no fixed peer list, no manual IP exchange), an authenticated rendezvous protocol that coordinates the connection using HMAC, and UDP hole punching combined with TCP connect. It has been tested on real hardware - Between a local machine and a VPS, and between two machines on separate mobile networks in different countries - not just in theory. This is the connection-establishment layer: infrastructure for getting peers talking, not a full chat or file-sharing application.
 
 
 
@@ -100,4 +100,5 @@ Engine components and the traffic flow between them. The reactor and `Rendezvous
 
 ## Acknowledgements
 
-Beej's Guide to Network Programming Using Internet Sockets by Brian "Beej" Hall (Revision 2.3.1, 2001).
+My introduction to socket programming was *Beej's Guide to Network Programming Using Internet Sockets* by Brian "Beej" Hall (Revision 2.3.1, 2001), and I'm grateful to the author for such a clear, freely available resource.
+
