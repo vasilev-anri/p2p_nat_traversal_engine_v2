@@ -70,8 +70,11 @@ Once the node knows its public IP, it announces itself by publishing a record co
 
 ## Architecture
 
+The architecture employs a non-blocking, event-driven I/O model leveraging Linux epoll [4]: a single thread waits for I/O events on many sockets and dispatches each event to the handler that owns the socket, an arrangement known as the reactor pattern [5]. The pattern keeps event detection separate from the code that reacts to events. Each handler (a TCP listener, a UDP handler for rendezvous and hole-punching traffic, and one session handler per TCP connection) has a single responsibility, and a new kind of handler can be added without changing the loop. It also avoids multithreading in the engine's own network code, at the price that a handler must never block or hog the loop [5]. Sockets are non-blocking and registered in edge-triggered mode, so a handler must drain its socket until `EAGAIN` or it misses data [4]. Writes go through a per-session queue, and `EPOLLOUT` is requested only while the queue is non-empty, so a slow peer cannot block the loop. Timers (keep-alives, pings, punch retries) are polled once per loop iteration. Concurrent TCP sessions are capped at 256 and punch targets at 128. OpenDHT runs on its own thread and reports discovered peers through a callback, whose set of already-requested peers is guarded by a mutex.
+
 ![Architecture. Main thread: reactor & handlers; DHT Thread](docs/images/architecture-diagram.png)
-* Engine components and the traffic flow between them. The reactor and `RendezvousClient` run on the main thread. OpenDHT runs on its own thread and invokes the discovery callback, which calls `RendezvousClient::send_request()` to send the request message.
+
+Engine components and the traffic flow between them. The reactor and `RendezvousClient` run on the main thread. OpenDHT runs on its own thread and invokes the discovery callback, which calls `RendezvousClient::send_request()` to send the request message.
 
 
 ## References
@@ -79,7 +82,8 @@ Once the node knows its public IP, it announces itself by publishing a record co
 [1] B. Ford, P. Srisuresh, and D. Kegel, "Peer-to-peer communication across network address translators," in Proc. USENIX Annual Technical Conference, 2005, pp. 179–192.  
 [2] P. Maymounkov and D. Mazières, "Kademlia: A peer-to-peer information system based on the XOR metric," in Peer-to-Peer Systems: First International Workshop, IPTPS 2002, P. Druschel, F. Kaashoek, and A. Rowstron, Eds., ser. Lecture Notes in Computer Science, vol. 2429. Springer, 2002, pp. 53–65.  
 [3] Savoir-faire Linux, "OpenDHT: A lightweight C++17 Distributed Hash Table implementation", GitHub repository. [Online]. Available: https://github.com/savoirfairelinux/opendht. [Accessed: Oct. 11, 2026].    
-[4] M. Kerrisk, "THE LINUX PROGRAMMING INTERFACE, A Linux and UNIX® System Programming Handbook", San Francisco, CA, No Starch Press, Inc. 2010, ch. 63, pp. 1355-1367.
+[4] M. Kerrisk, "THE LINUX PROGRAMMING INTERFACE, A Linux and UNIX® System Programming Handbook", San Francisco, CA, No Starch Press, Inc. 2010, ch. 63, pp. 1355-1367.   
+[5] A. Petersen, "Patterns in C – Part 5: REACTOR," CVu, vol. 17, no. 5, Oct. 2005. [Online]. Available: https://www.adamtornhill.com/Patterns%20in%20C%205,%20REACTOR.pdf
 
 ## Acknowledgements
 
