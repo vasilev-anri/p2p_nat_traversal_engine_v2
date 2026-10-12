@@ -89,6 +89,30 @@ The architecture employs a non-blocking, event-driven I/O model leveraging Linux
 
 Engine components and the traffic flow between them. The reactor and `RendezvousClient` run on the main thread. OpenDHT runs on its own thread and invokes the discovery callback, which calls `RendezvousClient::send_request()` to send the request message.
 
+## Test results
+
+| Setup      | UDP Path | TCP Session     |
+| :---:        |    :----:   |          :---: |
+| Computer behind a NAT & a VPS with a public IP      | established       | established   |
+| Two computers on separate mobile networks (4 runs)   | established in 4 out of 4        | not established in 4 out of 4      |
+
+Logs from one side of the last mobile-to-mobile run, with addresses replaced with placeholders.
+
+```
+[info] node_id: <node A>
+[info] tcp: 8080 udp: 9090
+[info] rendezvous server: <server ip>:9999
+[info] public ip: <A public ip>
+[dht] discovered peer - node_id: <node B> ip: <B public ip>
+[rendezvous] NOTIFY received from node: <node B>
+[rendezvous] peer endpoints - public: <B public ip>:9090 private: <B private ip>:9090
+[tcp] dialing <B public ip>:8080
+[punch] hole opened for node <node B> <-- <B public ip>:9090
+[tcp] outbound connect failed: Connection refused
+[rendezvous] sending keepalive - node_id: <node A>
+```
+
+UDP Path is established when each peer receives a punch packet from the other. The TCP Session is established when the `HELLO` handshake is completed.
 
 ## References
 
