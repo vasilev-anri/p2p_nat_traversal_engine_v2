@@ -46,7 +46,7 @@ UDP hole punching exploits outbound traffic to establish the necessary NAT mappi
 * Adapted from Figure 5 in Ford, Srisuresh & Kegel (2005)
 * The red path shows one possible dropped first packet, if it arrives before that peer's own outbound packet has opened its NAT's hole. Since both peers keep sending, each side's hole still opens shortly after, and once both are open, communication proceeds normally in both directions.
 
-## Establishing a connection between peers A and B.
+## Establishing a connection between peers A and B
 
 ### UDP session & Punch
 
