@@ -12,7 +12,7 @@ NAT traversal is a critically important issue in modern real-time internet commu
 
 
 
-## Features
+## 1. Features
 
 - Event Poll-based single-threaded reactor (Edge-Triggered Notification mode)
 - DHT-based peer discovery (Kademlia OpenDHT)
@@ -21,7 +21,7 @@ NAT traversal is a critically important issue in modern real-time internet commu
 - Outbound TCP connection establishment
 - NAT keep-alive (periodic refresh so mappings don't expire)
 
-
+## 2. How NAT works
 NAT is used to modify source and/or destination IP addresses and/or ports. It enables private networks to use the Internet or the cloud. In other words, it translates private IP addresses in a private network to a public network address before packets are sent to an external network. It can also translate port numbers, allowing multiple devices on a private network to share the same public IP address.
 
 
@@ -33,6 +33,7 @@ As for unsolicited incoming packets, if NAT is unable to find a translation entr
 ![NAPT traversal process - success](docs/images/nat-success-diagram.png)
 ![NAPT traversal process - failure](docs/images/nat-failure-drop-diagram.png)
 
+## 3. Hole punching
 Even when peers behind NATs know each other's public endpoints, they cannot necessarily connect directly because each NAT may reject incoming traffic from the other peer until an appropriate NAT mapping has been established. 
 
 If a peer's NAT encounters a packet before it has sent any traffic through it to that specific peer, then that packet may be treated as unsolicited incoming traffic and will be dropped.
@@ -45,9 +46,9 @@ UDP hole punching exploits outbound traffic to establish the necessary NAT mappi
 * Adapted from Figure 5 in Ford, Srisuresh & Kegel (2005)
 * The red path shows one possible dropped first packet, if it arrives before that peer's own outbound packet has opened its NAT's hole. Since both peers keep sending, each side's hole still opens shortly after, and once both are open, communication proceeds normally in both directions.
 
-## Establishing a connection between peers A and B
+## 4. Establishing a connection between peers A and B
 
-### UDP session & Punch
+### 4.1 UDP session & Punch
 
 Both peers must have an active UDP *session* with the rendezvous server S. To accomplish that, both clients must register themselves with the server by sending a REGISTER message and letting the server know about their private endpoint (IP and port), so that the server will have both the private endpoint and the public endpoint; the latter is acquired from the translated source endpoint of the packet as observed by the server (usually, the public IP and UDP port that the NAPT assigned to the flow/mapping). If a peer is not behind a NAT/NAPT, its private and public endpoints should be identical [1].
 
@@ -57,7 +58,7 @@ Once an engine knows its public IP, it announces itself on the DHT under the roo
 
 On `NOTIFY`, each engine starts sending UDP packets to both of the other peer's endpoints (the punch) and, at the same moment, attempts a plain outbound TCP connection to the peer's public endpoint.
 
-### TCP Connection
+### 4.2 TCP Connection
 
 On the same `NOTIFY`, the engine also opens a plain outbound TCP connection to the peer. Both peers dial at the same time, so a session can form in whichever direction the NATs allow. This is not TCP hole punching as described in [1], Section 4, which needs both sides to connect from the same local port so the SYN packets cross.
 
@@ -67,7 +68,7 @@ Once connected, the two sides exchange a short `HELLO` handshake and then send `
 
 
 
-## Peer discovery with a DHT
+## 5. Peer discovery with a DHT
 
 The DHT is used solely for peer discovery and has nothing to do with establishing the connection itself. It only lets peers find out that other peers exist, and it provides no mechanism for connectivity, even though it uses UDP under the hood. In this section, "peer" and "node" mean the same thing: a participant in the network.
 
@@ -81,7 +82,7 @@ Once the node knows its public IP, it announces itself by publishing a record co
 
 
 
-## Architecture
+## 6. Architecture
 
 The architecture employs a non-blocking, event-driven I/O model leveraging Linux epoll [4]: a single thread waits for I/O events on many sockets and dispatches each event to the handler that owns the socket, an arrangement known as the reactor pattern [5]. The pattern keeps event detection separate from the code that reacts to events. Each handler (a TCP listener, a UDP handler for rendezvous and hole-punching traffic, and one session handler per TCP connection) has a single responsibility, and a new kind of handler can be added without changing the loop. It also avoids multithreading in the engine's own network code, at the price that a handler must never block or hog the loop [5]. Sockets are non-blocking and registered in edge-triggered mode, so a handler must drain its socket until `EAGAIN` or it misses data [4]. Writes go through a per-session queue, and `EPOLLOUT` is requested only while the queue is non-empty, so a slow peer cannot block the loop. Timers (keep-alives, pings, punch retries) are polled once per loop iteration. Concurrent TCP sessions are capped at 256 and punch targets at 128. OpenDHT runs on its own thread and reports discovered peers through a callback, whose set of already-requested peers is guarded by a mutex.
 
@@ -89,7 +90,7 @@ The architecture employs a non-blocking, event-driven I/O model leveraging Linux
 
 Engine components and the traffic flow between them. The reactor and `RendezvousClient` run on the main thread. OpenDHT runs on its own thread and invokes the discovery callback, which calls `RendezvousClient::send_request()` to send the request message.
 
-## Test results
+## 7. Test results
 
 | Setup      | UDP Path | TCP Session     |
 | :---:        |    :----:   |          :---: |
@@ -116,7 +117,7 @@ UDP Path is established when each peer receives a punch packet from the other. T
 
 The UDP punch worked in all four runs. The TCP connection did not form in any of them, which is expected: the engine makes only a plain outbound connect, so each peer's connection attempt arrives at the other's NAT with no matching outgoing session, and a traditional NAT treats such traffic as unsolicited [1]. The logs are consistent with this but do not prove it. Getting a session between two NATed peers would need TCP hole punching or a relay (see Roadmap).
 
-## Build & Run
+## 8. Build & Run
 
 **Requirements:** Linux (the reactor uses epoll), a C++23 compiler (developed with GCC 14; `std::expected<>` needs GCC 13 or newer), CMake 4.1 or newer (as written in `CMakeLists.txt`; on an older CMake, lower the version on its first line, which is untested), pkg-config, git, the OpenSSL development headers, and [OpenDHT](https://github.com/savoirfairelinux/opendht). OpenDHT has its own dependencies, listed on its [build page](https://github.com/savoirfairelinux/opendht/wiki/Build-the-library). The engine was developed with OpenDHT 4.4.1 built from source with `-DCMAKE_INSTALL_PREFIX=/usr`, so that `pkg-config` finds it:
 
@@ -159,7 +160,7 @@ A successful run logs `NOTIFY received`, then `[punch] hole opened`, and, if a T
 - In CLion, set the variables in the Run Configuration, because it doesn't inherit your shell's environment.
 
 
-## Limitations
+## 9. Limitations
 
 **Limited testing.** Tested between NATed computers and a public VPS, and between two machines on separate mobile networks. Other networks have not been tested; the NAT types are not detected, and no automated tests.
 
@@ -173,7 +174,7 @@ A successful run logs `NOTIFY received`, then `[punch] hole opened`, and, if a T
 
 
 
-## Roadmap
+## 10. Roadmap
 
 **Relay fallback.** Forward traffic through the server for peers that are unable to connect directly.
 
