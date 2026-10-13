@@ -151,5 +151,9 @@ The UDP punch worked in all four runs. The TCP connection did not form in any of
 
 ## Acknowledgements
 
-My introduction to socket programming was *Beej's Guide to Network Programming Using Internet Sockets* by Brian "Beej" Hall (Revision 2.3.1, 2001), and I'm grateful to the author for such a clear, freely available resource.
+- My introduction to socket programming was *Beej's Guide to Network Programming Using Internet Sockets* by Brian "Beej" Hall (Revision 2.3.1, 2001), and I'm grateful to the author for such a clear, freely available resource.
 
+- [RFC 3022](https://www.rfc-editor.org/info/rfc3022/): P. Srisuresh and K. Egevang, "Traditional IP Network Address Translator (Traditional NAT)," January 2001.
+- [RFC 5128](https://www.rfc-editor.org/info/rfc5128/#section-3.3.1): P. Srisuresh, B. Ford, and D. Kegel, "State of Peer-to-Peer (P2P) Communication across Network Address Translators (NATs)," March 2008.
+- [RFC 9293](https://datatracker.ietf.org/doc/html/rfc9293): W. Eddy, Ed., "Transmission Control Protocol (TCP)," August 2022.
+- [epoll(7) — Linux manual page](https://man7.org/linux/man-pages/man7/epoll.7.html): Linux man-pages project, "epoll - I/O event notification facility," man-pages 6.19
