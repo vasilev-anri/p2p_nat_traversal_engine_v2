@@ -120,11 +120,26 @@ The UDP punch worked in all four runs. The TCP connection did not form in any of
 
 **Limited testing.** Tested between NATed computers and a public VPS, and between two machines on separate mobile networks. Other networks have not been tested; the NAT types are not detected, and no automated tests.
 
-**No session across two NATs.** TCP connections is not getting established. There is no Relay.  
+**No session across two NATs.** The UDP punch succeeds, but the TCP connection does not get established, and nothing uses the punched UDP path. There is no relay fallback.
 
 **Authentication.** The shared-secret HMAC covers only rendezvous messages, and it gives no per-peer identity or revocation. Punch packets (any datagram from a known peer endpoint counts as success), the `HELLO` node ID and the DHT records are unauthenticated, and the records are unencrypted. The room key is not a secret.
 
 **Clock dependency.** Rendezvous messages carry a timestamp, and the receiver rejects any message more than 30 seconds away from its own clock, on both the server and the engine. The log says only "dropped unauthenticated packet", not that the clock was the reason.
+
+**No peer selection API.** Currently, there is no way for the application to choose which peer to connect to.
+
+
+
+## Roadmap
+
+**Relay fallback.** Forward traffic through the server for peers that are unable to connect directly.
+
+**Per-node authentication.** Replacing the shared-secret HMAC with per-node Ed25519 identities.
+
+**Peer selection and a library API.** Letting the application choose which peer to connect to, and exposing the engine as a library with a clear interface.
+
+**Wider evaluation.** Testing across various NAT types.
+
 
 ## References
 
