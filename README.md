@@ -116,6 +116,49 @@ UDP Path is established when each peer receives a punch packet from the other. T
 
 The UDP punch worked in all four runs. The TCP connection did not form in any of them, which is expected: the engine makes only a plain outbound connect, so each peer's connection attempt arrives at the other's NAT with no matching outgoing session, and a traditional NAT treats such traffic as unsolicited [1]. The logs are consistent with this but do not prove it. Getting a session between two NATed peers would need TCP hole punching or a relay (see Roadmap).
 
+## Build & Run
+
+**Requirements:** Linux (the reactor uses epoll), a C++23 compiler (developed with GCC 14; `std::expected<>` needs GCC 13 or newer), CMake 4.1 or newer (as written in `CMakeLists.txt`; on an older CMake, lower the version on its first line, which is untested), pkg-config, git, the OpenSSL development headers, and [OpenDHT](https://github.com/savoirfairelinux/opendht). OpenDHT has its own dependencies, listed on its [build page](https://github.com/savoirfairelinux/opendht/wiki/Build-the-library). The engine was developed with OpenDHT 4.4.1 built from source with `-DCMAKE_INSTALL_PREFIX=/usr`, so that `pkg-config` finds it:
+
+**Build.** The `--recurse-submodules` flag is needed because the protocol code is a submodule:
+```bash
+git clone --recurse-submodules https://github.com/vasilev-anri/p2p_nat_traversal_engine_v2.git
+cd p2p_nat_traversal_engine_v2 && mkdir build && cd build
+cmake .. && make -j$(nproc)
+```
+
+If it was cloned without that flag, `src/protocol` will be empty. Fetch it with `git submodule update --init --recursive`, then build.
+
+**Configuration.** The engine reads three environment variables and exits with an error if one is missing:
+
+| Variable | Meaning |
+|---|---|
+| `P2P_SHARED_SECRET` | HMAC key (`openssl rand -hex 32`). Must be identical on every engine and on the rendezvous server. |
+| `P2P_ROOM_KEY` | DHT channel name. Peers that should find each other need the same value. |
+| `P2P_VPS_IP` | IPv4 address of the rendezvous server. |
+
+**Rendezvous server.** It lives in a separate repository, [p2p-rendezvous-server](https://github.com/vasilev-anri/p2p-rendezvous-server), and runs on a host with a public IP. It needs only `P2P_SHARED_SECRET`. As a systemd service it can read the secret from a file with `EnvironmentFile=` (permissions `600`). Anyone running the engine needs their own (VPS) rendezvous server and their own shared secret.
+
+**Run.** On the host with the public IP, start the server:
+```bash
+export P2P_SHARED_SECRET=...
+./rendezvous
+```
+
+Then, on each of the two machines, run the engine with the same room key:
+
+```bash
+export P2P_SHARED_SECRET=... P2P_ROOM_KEY=my-room P2P_VPS_IP=<your VPS ip>
+./p2p_nat_v2
+```
+A successful run logs `NOTIFY received`, then `[punch] hole opened`, and, if a TCP session forms, `[tcp] handshake complete`.
+
+**Notes**
+- Ports are fixed: UDP 9090 and TCP 8080 on the engine, UDP 4222 for the DHT, and UDP 9999 on the server. Make sure none is blocked by a firewall.
+- Clocks must agree within about 30 seconds (use NTP), or the server silently drops the packets.
+- In CLion, set the variables in the Run Configuration, because it doesn't inherit your shell's environment.
+
+
 ## Limitations
 
 **Limited testing.** Tested between NATed computers and a public VPS, and between two machines on separate mobile networks. Other networks have not been tested; the NAT types are not detected, and no automated tests.
